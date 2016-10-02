@@ -1,5 +1,9 @@
 #include "ovpCBoxDisplayDynamicCueImage.h"
+
+#include "boost/filesystem.hpp"
 #include <iostream>
+#include <algorithm>
+#include <string>
 
 using namespace OpenViBE;
 using namespace OpenViBE::Kernel;
@@ -7,6 +11,8 @@ using namespace OpenViBE::Plugins;
 
 using namespace OpenViBEPlugins;
 using namespace OpenViBEPlugins::SimpleVisualisation;
+
+using namespace boost::filesystem;
 
 namespace OpenViBEPlugins
 {
@@ -24,15 +30,24 @@ namespace OpenViBEPlugins
 			return TRUE;
 		}
 
+		bool filenamesCompare(const std::pair<OpenViBE::CString, ::GdkPixbuf*>& firstElem, std::pair<OpenViBE::CString, ::GdkPixbuf*>& secondElem)
+		{
+			std::string firstPath = firstElem.first.toASCIIString();
+			std::string secondPath = secondElem.first.toASCIIString();
+
+			std::string firstFilename = firstPath.substr(firstPath.find("\\") + 1);
+			std::string secondFilename = secondPath.substr(secondPath.find("\\") + 1);
+
+			int firstId = std::stoi(firstFilename.substr(0, firstFilename.find("_")));
+			int secondId = std::stoi(secondFilename.substr(0, secondFilename.find("_")));
+
+			return firstId < secondId;
+		}
+
 		CDisplayDynamicCueImage::CDisplayDynamicCueImage(void) :
 			m_pBuilderInterface(NULL),
 			m_pMainWindow(NULL),
-			m_pDrawingArea(NULL),
-			//m_pStimulationReaderCallBack(NULL),
-			m_bImageRequested(false),
-			m_bImageDrawn(false),
-			m_pOriginalPicture(NULL),
-			m_pScaledPicture(NULL)
+			m_pDrawingArea(NULL)
 		{
 			m_oBackgroundColor.pixel = 0;
 			m_oBackgroundColor.red = 0;
@@ -45,20 +60,48 @@ namespace OpenViBEPlugins
 			m_oForegroundColor.blue = 0xFFFF;
 		}
 
-		boolean CDisplayDynamicCueImage::initialize()
+		OpenViBE::boolean CDisplayDynamicCueImage::initialize()
 		{
 			//>>>> Reading Settings:
 
-			//Number of Cues:
-			CString l_sSettingValue;
+			// Image directory path
+			CString l_sDirectoryPath;
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(0, l_sDirectoryPath);
 
-			//Do we display the images in full screen?
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(0, l_sSettingValue);
+			// Image extension
+			CString l_sImageExtension;
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(1, l_sImageExtension);
 
-			//Clear screen stimulation:
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(1, l_sSettingValue);
+			// Load files inside directory
+			path p(l_sDirectoryPath.toASCIIString());
+			directory_iterator end_itr;
 
-			//Stimulation ID and images file names for each cue
+			for (directory_iterator itr(p); itr != end_itr; ++itr)
+			{
+				if (is_regular_file(itr->path()) && itr->path().extension() == ("." + l_sImageExtension).toASCIIString())
+				{
+					CString filename(itr->path().string().c_str());
+					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
+					
+					if (l_pOriginalPicture)
+					{
+						m_pOriginalPicture.push_back(std::make_pair(filename, l_pOriginalPicture));
+					}
+					else
+					{
+						getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_ImportantWarning << "Error couldn't load ressource file : " << filename << "!\n";
+					}
+				}
+			}
+
+			// Sort files according to digits in beginning of filename
+			std::sort(m_pOriginalPicture.begin(), m_pOriginalPicture.end(), filenamesCompare);
+
+			for (std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>::const_iterator it = m_pOriginalPicture.begin(); it != m_pOriginalPicture.end(); it++)
+			{
+				std::cout << it->first.toASCIIString() << std::endl;
+			}
+			
 
 			//load the gtk builder interface
 			m_pBuilderInterface=gtk_builder_new();
@@ -85,16 +128,12 @@ namespace OpenViBEPlugins
 			gtk_widget_modify_fg(m_pDrawingArea, GTK_STATE_PRELIGHT, &m_oForegroundColor);
 			gtk_widget_modify_fg(m_pDrawingArea, GTK_STATE_ACTIVE, &m_oForegroundColor);
 
-			//Load the pictures:
-
-			std::cout << OpenViBE::Directories::getDataDir() << std::endl;
-
 			getBoxAlgorithmContext()->getVisualisationContext()->setWidget(m_pDrawingArea);
 
 			return true;
 		}
 
-		boolean CDisplayDynamicCueImage::uninitialize()
+		OpenViBE::boolean CDisplayDynamicCueImage::uninitialize()
 		{
 
 			//destroy drawing area
@@ -114,20 +153,9 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		boolean CDisplayDynamicCueImage::processClock(CMessageClock& rMessageClock)
+		OpenViBE::boolean CDisplayDynamicCueImage::processClock(CMessageClock& rMessageClock)
 		{
-			IBoxIO* l_pBoxIO=getBoxAlgorithmContext()->getDynamicBoxContext();
-			return true;
-		}
-
-		boolean CDisplayDynamicCueImage::processInput(uint32 ui32InputIndex)
-		{
-			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
-			return true;
-		}
-
-		boolean CDisplayDynamicCueImage::process()
-		{
+			// IBoxIO* l_pBoxIO=getBoxAlgorithmContext()->getDynamicBoxContext();
 			return true;
 		}
 
@@ -139,12 +167,12 @@ namespace OpenViBEPlugins
 
 		void CDisplayDynamicCueImage::drawCuePicture(OpenViBE::uint32 uint32CueID)
 		{
-			gint l_iWindowWidth = m_pDrawingArea->allocation.width;
+			/*gint l_iWindowWidth = m_pDrawingArea->allocation.width;
 			gint l_iWindowHeight = m_pDrawingArea->allocation.height;
 
-				gint l_iX = (l_iWindowWidth/2) - gdk_pixbuf_get_width(m_pScaledPicture[uint32CueID])/2;
-				gint l_iY = (l_iWindowHeight/2) - gdk_pixbuf_get_height(m_pScaledPicture[uint32CueID])/2;;
-				gdk_draw_pixbuf(m_pDrawingArea->window, NULL, m_pScaledPicture[uint32CueID], 0, 0, l_iX, l_iY, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
+			gint l_iX = (l_iWindowWidth/2) - gdk_pixbuf_get_width(m_pScaledPicture[uint32CueID])/2;
+			gint l_iY = (l_iWindowHeight/2) - gdk_pixbuf_get_height(m_pScaledPicture[uint32CueID])/2;;
+			gdk_draw_pixbuf(m_pDrawingArea->window, NULL, m_pScaledPicture[uint32CueID], 0, 0, l_iX, l_iY, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);*/
 		}
 
 		void CDisplayDynamicCueImage::resize(uint32 ui32Width, uint32 ui32Height)

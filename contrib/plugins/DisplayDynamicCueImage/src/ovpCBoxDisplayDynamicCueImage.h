@@ -7,9 +7,9 @@
 
 #include <gtk/gtk.h>
 #include <vector>
-#include <string>
-#include <map>
-#include <deque>
+//#include <string>
+//#include <map>
+//#include <deque>
 
 // The unique identifiers for the box and its descriptor.
 // Identifier are randomly chosen by the skeleton-generator.
@@ -33,10 +33,9 @@ namespace OpenViBEPlugins
 
 			virtual OpenViBE::boolean initialize();
 			virtual OpenViBE::boolean uninitialize();
-			virtual OpenViBE::boolean processInput(OpenViBE::uint32 ui32InputIndex);
 			virtual OpenViBE::uint64 getClockFrequency(void){ return (128LL<<32); }
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
-			virtual OpenViBE::boolean process();
+			virtual OpenViBE::boolean process(void) { return true; }
 			virtual void redraw(void);
 			virtual void resize(OpenViBE::uint32 ui32Width, OpenViBE::uint32 ui32Height);
 
@@ -52,19 +51,12 @@ namespace OpenViBEPlugins
 			::GtkWidget*  m_pDrawingArea;
 
 			// For the display of the images:
-			OpenViBE::boolean m_bImageRequested;        //when true: a new image must be drawn
 
-			OpenViBE::boolean m_bImageDrawn;            //when true: the new image has been drawn
-
-			::GdkPixbuf** m_pOriginalPicture;
-			::GdkPixbuf** m_pScaledPicture;
+			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pOriginalPicture;
+			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pScaledPicture;
 
 			::GdkColor m_oBackgroundColor;
 			::GdkColor m_oForegroundColor;
-
-			//Settings
-			OpenViBE::CString  m_sDirectoryPath;
-			
 		};
 
 		/**
@@ -93,6 +85,7 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean getBoxPrototype(OpenViBE::Kernel::IBoxProto& rPrototype) const
 			{
 				rPrototype.addSetting("Directory Path", OV_TypeId_Filename, "${Path_Data}");
+				rPrototype.addSetting("Image extension", OV_TypeId_String, "png");
 				return true;
 			}
 
