@@ -52,8 +52,10 @@ namespace OpenViBEPlugins
 
 			// For the display of the images:
 
+			OpenViBE::uint32							            m_ui32NumberOfCue;
+			OpenViBE::uint32							            m_int32RequestedImageID;
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pOriginalPicture;
-			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pScaledPicture;
+			//std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pScaledPicture;
 
 			::GdkColor m_oBackgroundColor;
 			::GdkColor m_oForegroundColor;
