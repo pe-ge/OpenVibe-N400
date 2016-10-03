@@ -12,7 +12,7 @@ if __name__ == '__main__':
     for ext in '*.jpg', '*.png':
         filenames.extend(glob(ext))
 
-    # create new folder
+    # create new folder (check whether old one exists)
     count = 1
     dest_dir = os.path.join(src_dir, dest_dir_name + str(count))
     while os.path.exists(dest_dir):
@@ -37,5 +37,3 @@ if __name__ == '__main__':
         src_file = os.path.join(dest_dir, old_filename)
         dest_file = os.path.join(dest_dir, new_filename)
         os.rename(src_file, dest_file)
-
-    # print(filenames)
