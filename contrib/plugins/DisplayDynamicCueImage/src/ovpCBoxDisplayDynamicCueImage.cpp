@@ -49,6 +49,7 @@ namespace OpenViBEPlugins
 			m_ui32CrossDuration(0),
 			m_ui32PictureDuration(0),
 			m_ui32PauseDuration(0),
+			m_ui32TotalIterations(0),
 			m_pBuilderInterface(NULL),
 			m_pMainWindow(NULL),
 			m_pDrawingArea(NULL),
@@ -56,7 +57,10 @@ namespace OpenViBEPlugins
 			m_int32RequestedImageID(0),
 			m_bCrossDrawn(false),
 			m_bPictureDrawn(false),
-			m_bPauseDrawn(false)
+			m_bPauseDrawn(false),
+			m_ui32IterationTime(0),
+			m_ui32IterationCount(0),
+			m_ui32ExperimentDuration(0)
 		{
 			m_oBackgroundColor.pixel = 0;
 			m_oBackgroundColor.red = 0;
@@ -85,6 +89,8 @@ namespace OpenViBEPlugins
 			m_ui32CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 2);
 			m_ui32PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 3);
 			m_ui32PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 4);
+
+			m_ui32ExperimentDuration = m_ui32CrossDuration + 2 * m_ui32PictureDuration + 2 * m_ui32PauseDuration;
 
 			// Load files inside directory
 			path p(l_sDirectoryPath.toASCIIString());
@@ -187,8 +193,9 @@ namespace OpenViBEPlugins
 
 		OpenViBE::boolean CDisplayDynamicCueImage::processClock(CMessageClock& rMessageClock)
 		{
-			float time = (this->getPlayerContext().getCurrentTime() >> 16) / 65.5360;
-			//std::cout << time << std::endl;
+			// Obtain time of current iteration
+			m_ui32IterationTime = (uint32)((this->getPlayerContext().getCurrentTime() >> 16) / 65.5360) % m_ui32ExperimentDuration;
+			std::cout << m_ui32IterationTime << std::endl;
 			return true;
 		}
 

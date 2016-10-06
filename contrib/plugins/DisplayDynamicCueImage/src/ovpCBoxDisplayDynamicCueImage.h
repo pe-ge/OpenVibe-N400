@@ -49,6 +49,7 @@ namespace OpenViBEPlugins
 			OpenViBE::uint32 m_ui32CrossDuration;
 			OpenViBE::uint32 m_ui32PictureDuration;
 			OpenViBE::uint32 m_ui32PauseDuration;
+			OpenViBE::uint32 m_ui32TotalIterations;
 
 			// The Builder handler used to create the interface
 			::GtkBuilder* m_pBuilderInterface;
@@ -70,7 +71,9 @@ namespace OpenViBEPlugins
 			::GdkColor m_oForegroundColor;
 
 			// For the time of current iteration
-			OpenViBE::float32 m_f32IterationTime;
+			OpenViBE::uint32	m_ui32IterationTime;
+			OpenViBE::uint32	m_ui32IterationCount;
+			OpenViBE::uint32	m_ui32ExperimentDuration;
 		};
 
 		/**
@@ -103,6 +106,7 @@ namespace OpenViBEPlugins
 				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
 				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
 				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");
+				rPrototype.addSetting("Total iterations", OV_TypeId_Integer, "100");
 				return true;
 			}
 
