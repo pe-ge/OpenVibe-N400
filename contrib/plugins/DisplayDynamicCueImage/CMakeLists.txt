@@ -16,13 +16,9 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
 INCLUDE("FindOpenViBE")
 INCLUDE("FindOpenViBECommon")
 INCLUDE("FindOpenViBEToolkit")
-INCLUDE("FindOpenViBEModuleEBML")
-INCLUDE("FindOpenViBEModuleSystem")
 INCLUDE("FindThirdPartyGTK")
-INCLUDE("FindThirdPartyBoost")#need boost for erp plot
-### PThreads ###########################
-# INCLUDE("FindThirdPartyPThread")
-
+INCLUDE("FindThirdPartyBoost")
+INCLUDE("FindThirdPartyBoost_FileSystem")
 
 # ---------------------------------
 # Target macros

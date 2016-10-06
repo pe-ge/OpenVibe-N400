@@ -22,6 +22,15 @@ namespace OpenViBEPlugins
 	namespace SimpleVisualisation
 	{
 
+		enum N400Cue
+		{
+			CROSS		= 0,
+			PICTURE1	= 1,
+			PAUSE1		= 2,
+			PICTURE2	= 3,
+			PAUSE2		= 4
+		};
+
 		class CDisplayDynamicCueImage :
 				public OpenViBEToolkit::TBoxAlgorithm<OpenViBE::Plugins::IBoxAlgorithm>
 		{
@@ -45,18 +54,34 @@ namespace OpenViBEPlugins
 
 			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
 
-			//The Builder handler used to create the interface
+			// Box settings
+			OpenViBE::uint32 m_uint32CrossDuration;
+			OpenViBE::uint32 m_uint32PictureDuration;
+			OpenViBE::uint32 m_uint32PauseDuration;
+			OpenViBE::uint32 m_uint32TotalIterations;
+
+			// The Builder handler used to create the interface
 			::GtkBuilder* m_pBuilderInterface;
 			::GtkWidget*  m_pMainWindow;
 			::GtkWidget*  m_pDrawingArea;
 
 			// For the display of the images:
 
+			OpenViBE::uint32	m_uint32NumberOfCue;
+			OpenViBE::uint32	m_uint32RequestedPictureID;
+			OpenViBE::boolean	m_bRequestDraw;
+			N400Cue				m_eCurrentCue;
+
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pOriginalPicture;
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pScaledPicture;
 
 			::GdkColor m_oBackgroundColor;
 			::GdkColor m_oForegroundColor;
+
+			// For the time of current iteration
+			OpenViBE::uint32	m_uint32IterationTime;
+			OpenViBE::uint32	m_uint32IterationCount;
+			OpenViBE::uint32	m_uint32ExperimentDuration;
 		};
 
 		/**
@@ -86,6 +111,10 @@ namespace OpenViBEPlugins
 			{
 				rPrototype.addSetting("Directory Path", OV_TypeId_Filename, "${Path_Data}");
 				rPrototype.addSetting("Image extension", OV_TypeId_String, "png");
+				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
+				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
+				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");
+				rPrototype.addSetting("Total iterations", OV_TypeId_Integer, "100");
 				return true;
 			}
 
