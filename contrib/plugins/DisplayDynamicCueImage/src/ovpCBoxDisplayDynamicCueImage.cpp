@@ -1,5 +1,10 @@
 #include "ovpCBoxDisplayDynamicCueImage.h"
 
+/* TODO:
+ *	using regexes in function filenamesCompare
+ *	 
+*/
+
 #include "boost/filesystem.hpp"
 #include <iostream>
 #include <algorithm>
@@ -33,7 +38,6 @@ namespace OpenViBEPlugins
 
 		bool filenamesCompare(const std::pair<OpenViBE::CString, ::GdkPixbuf*>& firstElem, std::pair<OpenViBE::CString, ::GdkPixbuf*>& secondElem)
 		{
-			//boost::r
 			std::string firstPath = firstElem.first.toASCIIString();
 			std::string secondPath = secondElem.first.toASCIIString();
 

@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     # append idxs in ascending order to filenames
     new_filenames = {filename: '{idx:03}_{filename}'.format(
-        idx=2*idx, filename=filename) for idx, filename in enumerate(filenames)}
+        idx=(2*idx + 1), filename=filename) for idx, filename in enumerate(filenames)}
 
     # copy files to new folder
     for old_filename, new_filename in new_filenames.items():
