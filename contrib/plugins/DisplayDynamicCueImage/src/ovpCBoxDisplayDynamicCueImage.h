@@ -22,6 +22,15 @@ namespace OpenViBEPlugins
 	namespace SimpleVisualisation
 	{
 
+		enum N400Cue
+		{
+			CROSS		= 0,
+			PICTURE1	= 1,
+			PAUSE1		= 2,
+			PICTURE2	= 3,
+			PAUSE2		= 4
+		};
+
 		class CDisplayDynamicCueImage :
 				public OpenViBEToolkit::TBoxAlgorithm<OpenViBE::Plugins::IBoxAlgorithm>
 		{
@@ -46,10 +55,10 @@ namespace OpenViBEPlugins
 			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
 
 			// Box settings
-			OpenViBE::uint32 m_ui32CrossDuration;
-			OpenViBE::uint32 m_ui32PictureDuration;
-			OpenViBE::uint32 m_ui32PauseDuration;
-			OpenViBE::uint32 m_ui32TotalIterations;
+			OpenViBE::uint32 m_uint32CrossDuration;
+			OpenViBE::uint32 m_uint32PictureDuration;
+			OpenViBE::uint32 m_uint32PauseDuration;
+			OpenViBE::uint32 m_uint32TotalIterations;
 
 			// The Builder handler used to create the interface
 			::GtkBuilder* m_pBuilderInterface;
@@ -58,11 +67,10 @@ namespace OpenViBEPlugins
 
 			// For the display of the images:
 
-			OpenViBE::uint32	m_ui32NumberOfCue;
-			OpenViBE::uint32	m_int32RequestedImageID;
-			OpenViBE::boolean	m_bCrossDrawn;
-			OpenViBE::boolean	m_bPictureDrawn;
-			OpenViBE::boolean	m_bPauseDrawn;
+			OpenViBE::uint32	m_uint32NumberOfCue;
+			OpenViBE::uint32	m_uint32RequestedPictureID;
+			OpenViBE::boolean	m_bRequestDraw;
+			N400Cue				m_eCurrentCue;
 
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pOriginalPicture;
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pScaledPicture;
@@ -71,9 +79,9 @@ namespace OpenViBEPlugins
 			::GdkColor m_oForegroundColor;
 
 			// For the time of current iteration
-			OpenViBE::uint32	m_ui32IterationTime;
-			OpenViBE::uint32	m_ui32IterationCount;
-			OpenViBE::uint32	m_ui32ExperimentDuration;
+			OpenViBE::uint32	m_uint32IterationTime;
+			OpenViBE::uint32	m_uint32IterationCount;
+			OpenViBE::uint32	m_uint32ExperimentDuration;
 		};
 
 		/**

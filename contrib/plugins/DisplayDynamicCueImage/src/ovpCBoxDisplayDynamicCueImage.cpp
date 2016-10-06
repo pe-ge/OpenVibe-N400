@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <string>
+#include <vector>
 
 using namespace OpenViBE;
 using namespace OpenViBE::Kernel;
@@ -46,26 +47,25 @@ namespace OpenViBEPlugins
 		}
 
 		CDisplayDynamicCueImage::CDisplayDynamicCueImage(void) :
-			m_ui32CrossDuration(0),
-			m_ui32PictureDuration(0),
-			m_ui32PauseDuration(0),
-			m_ui32TotalIterations(0),
+			m_uint32CrossDuration(0),
+			m_uint32PictureDuration(0),
+			m_uint32PauseDuration(0),
+			m_uint32TotalIterations(0),
 			m_pBuilderInterface(NULL),
 			m_pMainWindow(NULL),
 			m_pDrawingArea(NULL),
-			m_ui32NumberOfCue(0),
-			m_int32RequestedImageID(0),
-			m_bCrossDrawn(false),
-			m_bPictureDrawn(false),
-			m_bPauseDrawn(false),
-			m_ui32IterationTime(0),
-			m_ui32IterationCount(0),
-			m_ui32ExperimentDuration(0)
+			m_uint32NumberOfCue(0),
+			m_uint32RequestedPictureID(1),
+			m_bRequestDraw(false),
+			m_eCurrentCue(CROSS),
+			m_uint32IterationTime(0),
+			m_uint32IterationCount(0),
+			m_uint32ExperimentDuration(0)
 		{
 			m_oBackgroundColor.pixel = 0;
-			m_oBackgroundColor.red = 0;
-			m_oBackgroundColor.green = 0;
-			m_oBackgroundColor.blue = 0;
+			m_oBackgroundColor.red = 0xFFFF;
+			m_oBackgroundColor.green = 0xFFFF;
+			m_oBackgroundColor.blue = 0xFFFF;
 
 			m_oForegroundColor.pixel = 0;
 			m_oForegroundColor.red = 0xFFFF;
@@ -86,11 +86,11 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(1, l_sImageExtension);
 
 			// Durations
-			m_ui32CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 2);
-			m_ui32PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 3);
-			m_ui32PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 4);
+			m_uint32CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 2);
+			m_uint32PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 3);
+			m_uint32PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 4);
 
-			m_ui32ExperimentDuration = m_ui32CrossDuration + 2 * m_ui32PictureDuration + 2 * m_ui32PauseDuration;
+			m_uint32ExperimentDuration = m_uint32CrossDuration + 2 * m_uint32PictureDuration + 2 * m_uint32PauseDuration;
 
 			// Load files inside directory
 			path p(l_sDirectoryPath.toASCIIString());
@@ -115,7 +115,7 @@ namespace OpenViBEPlugins
 				}
 			}
 
-			m_ui32NumberOfCue = m_pOriginalPicture.size();
+			m_uint32NumberOfCue = m_pOriginalPicture.size();
 
 			// Sort files according to digits in beginning of filename
 			std::sort(m_pOriginalPicture.begin(), m_pOriginalPicture.end(), filenamesCompare);
@@ -175,7 +175,7 @@ namespace OpenViBEPlugins
 				m_pBuilderInterface=NULL;
 			}
 
-			for (uint32 i = 0; i < m_ui32NumberOfCue; i++) {
+			for (uint32 i = 0; i < m_uint32NumberOfCue; i++) {
 				if (m_pOriginalPicture[i].second)
 				{
 					g_object_unref(G_OBJECT(m_pOriginalPicture[i].second));
@@ -193,18 +193,66 @@ namespace OpenViBEPlugins
 
 		OpenViBE::boolean CDisplayDynamicCueImage::processClock(CMessageClock& rMessageClock)
 		{
+			// Static variables
+			static uint32 l_uint32FirstPictureTime = m_uint32CrossDuration;
+			static uint32 l_uint32FirstPauseTime = l_uint32FirstPictureTime + m_uint32PictureDuration;
+			static uint32 l_uint32SecondPictureTime = l_uint32FirstPauseTime + m_uint32PauseDuration;
+			static uint32 l_uint32SecondPauseTime = l_uint32SecondPictureTime + m_uint32PictureDuration;
+
 			// Obtain time of current iteration
-			m_ui32IterationTime = (uint32)((this->getPlayerContext().getCurrentTime() >> 16) / 65.5360) % m_ui32ExperimentDuration;
-			std::cout << m_ui32IterationTime << std::endl;
+			uint32 l_uint32CurrentIterationTime = (uint32)((this->getPlayerContext().getCurrentTime() >> 16) / 65.5360) % m_uint32ExperimentDuration;
+
+			// start of new iteration?
+			if (l_uint32CurrentIterationTime < m_uint32IterationTime) {
+				m_uint32IterationCount++;
+				m_eCurrentCue = CROSS;
+				m_bRequestDraw = true;
+			}
+
+			if (!m_bRequestDraw) {
+				// First picture
+				if ((m_eCurrentCue == PICTURE1) && (l_uint32CurrentIterationTime > l_uint32FirstPictureTime)) {
+					m_bRequestDraw = true;
+				}
+				// First pause
+				else if ((m_eCurrentCue == PAUSE1) && (l_uint32CurrentIterationTime > l_uint32FirstPauseTime)) {
+					m_bRequestDraw = true;
+				}
+				// Second picture
+				else if ((m_eCurrentCue == PICTURE2) && (l_uint32CurrentIterationTime > l_uint32SecondPictureTime)) {
+					m_bRequestDraw = true;
+				}
+				// Second pause
+				else if ((m_eCurrentCue == PAUSE2) && (l_uint32CurrentIterationTime > l_uint32SecondPauseTime)) {
+					m_bRequestDraw = true;
+				}
+			}
+			
+			if(m_bRequestDraw && GTK_WIDGET(m_pDrawingArea)->window)
+			{
+				gdk_window_invalidate_rect(GTK_WIDGET(m_pDrawingArea)->window,NULL,true);
+			}
+
+			m_uint32IterationTime = l_uint32CurrentIterationTime;
 			return true;
 		}
 
 		//Callback called by GTK
 		void CDisplayDynamicCueImage::redraw()
 		{
-			if (m_int32RequestedImageID >= 0) {
-				drawCuePicture(m_int32RequestedImageID);
+			switch (m_eCurrentCue)
+			{
+				case CROSS:
+					drawCuePicture(0);
+					break;
+				case PICTURE1:
+				case PICTURE2:
+					drawCuePicture(m_uint32RequestedPictureID++);
+					if (m_uint32RequestedPictureID == m_pOriginalPicture.size()) m_uint32RequestedPictureID = 1;
+					break;
 			}
+			m_eCurrentCue = N400Cue((m_eCurrentCue + 1) % 5);
+			m_bRequestDraw = false;
 		}
 
 		void CDisplayDynamicCueImage::drawCuePicture(OpenViBE::uint32 uint32CueID)
@@ -216,7 +264,7 @@ namespace OpenViBEPlugins
 
 		void CDisplayDynamicCueImage::resize(uint32 ui32Width, uint32 ui32Height)
 		{
-			for (uint32 i = 0; i < m_ui32NumberOfCue; i++) {
+			for (uint32 i = 0; i < m_uint32NumberOfCue; i++) {
 				if (m_pScaledPicture[i].second) {
 					g_object_unref(G_OBJECT(m_pScaledPicture[i].second));
 				}
