@@ -46,11 +46,17 @@ namespace OpenViBEPlugins
 		}
 
 		CDisplayDynamicCueImage::CDisplayDynamicCueImage(void) :
+			m_ui32CrossDuration(0),
+			m_ui32PictureDuration(0),
+			m_ui32PauseDuration(0),
 			m_pBuilderInterface(NULL),
 			m_pMainWindow(NULL),
 			m_pDrawingArea(NULL),
 			m_ui32NumberOfCue(0),
-			m_int32RequestedImageID(0)
+			m_int32RequestedImageID(0),
+			m_bCrossDrawn(false),
+			m_bPictureDrawn(false),
+			m_bPauseDrawn(false)
 		{
 			m_oBackgroundColor.pixel = 0;
 			m_oBackgroundColor.red = 0;
@@ -74,6 +80,11 @@ namespace OpenViBEPlugins
 			// Image extension
 			CString l_sImageExtension;
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(1, l_sImageExtension);
+
+			// Durations
+			m_ui32CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 2);
+			m_ui32PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 3);
+			m_ui32PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 4);
 
 			// Load files inside directory
 			path p(l_sDirectoryPath.toASCIIString());
@@ -104,11 +115,11 @@ namespace OpenViBEPlugins
 			std::sort(m_pOriginalPicture.begin(), m_pOriginalPicture.end(), filenamesCompare);
 			std::sort(m_pScaledPicture.begin(), m_pScaledPicture.end(), filenamesCompare);
 
-			std::cout << "LOADING FILES" << std::endl;
+			/* std::cout << "LOADING FILES" << std::endl;
 			for (std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>::const_iterator it = m_pOriginalPicture.begin(); it != m_pOriginalPicture.end(); it++)
 			{
 				std::cout << it->first.toASCIIString() << std::endl;
-			}
+			} */
 			
 
 			//load the gtk builder interface
@@ -159,8 +170,16 @@ namespace OpenViBEPlugins
 			}
 
 			for (uint32 i = 0; i < m_ui32NumberOfCue; i++) {
-				if (m_pOriginalPicture[i].second) { g_object_unref(G_OBJECT(m_pOriginalPicture[i].second)); }
-				if (m_pScaledPicture[i].second) { g_object_unref(G_OBJECT(m_pScaledPicture[i].second)); }
+				if (m_pOriginalPicture[i].second)
+				{
+					g_object_unref(G_OBJECT(m_pOriginalPicture[i].second));
+					m_pOriginalPicture[i].second = nullptr;
+				}
+				if (m_pScaledPicture[i].second)
+				{
+					g_object_unref(G_OBJECT(m_pScaledPicture[i].second));
+					m_pScaledPicture[i].second = nullptr;
+				}
 			}
 
 			return true;
@@ -168,15 +187,17 @@ namespace OpenViBEPlugins
 
 		OpenViBE::boolean CDisplayDynamicCueImage::processClock(CMessageClock& rMessageClock)
 		{
-			// IBoxIO* l_pBoxIO=getBoxAlgorithmContext()->getDynamicBoxContext();
-			redraw();
+			float time = (this->getPlayerContext().getCurrentTime() >> 16) / 65.5360;
+			//std::cout << time << std::endl;
 			return true;
 		}
 
 		//Callback called by GTK
 		void CDisplayDynamicCueImage::redraw()
 		{
-			drawCuePicture(m_int32RequestedImageID);
+			if (m_int32RequestedImageID >= 0) {
+				drawCuePicture(m_int32RequestedImageID);
+			}
 		}
 
 		void CDisplayDynamicCueImage::drawCuePicture(OpenViBE::uint32 uint32CueID)
@@ -189,7 +210,9 @@ namespace OpenViBEPlugins
 		void CDisplayDynamicCueImage::resize(uint32 ui32Width, uint32 ui32Height)
 		{
 			for (uint32 i = 0; i < m_ui32NumberOfCue; i++) {
-				if (m_pScaledPicture[i].second) { g_object_unref(G_OBJECT(m_pScaledPicture[i].second)); }
+				if (m_pScaledPicture[i].second) {
+					g_object_unref(G_OBJECT(m_pScaledPicture[i].second));
+				}
 				m_pScaledPicture[i].second = gdk_pixbuf_scale_simple(m_pOriginalPicture[i].second, ui32Width, ui32Height, GDK_INTERP_BILINEAR);
 			}
 		}

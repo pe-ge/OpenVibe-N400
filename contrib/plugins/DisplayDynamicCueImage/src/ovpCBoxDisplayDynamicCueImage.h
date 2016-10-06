@@ -45,20 +45,32 @@ namespace OpenViBEPlugins
 
 			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
 
-			//The Builder handler used to create the interface
+			// Box settings
+			OpenViBE::uint32 m_ui32CrossDuration;
+			OpenViBE::uint32 m_ui32PictureDuration;
+			OpenViBE::uint32 m_ui32PauseDuration;
+
+			// The Builder handler used to create the interface
 			::GtkBuilder* m_pBuilderInterface;
 			::GtkWidget*  m_pMainWindow;
 			::GtkWidget*  m_pDrawingArea;
 
 			// For the display of the images:
 
-			OpenViBE::uint32							            m_ui32NumberOfCue;
-			OpenViBE::uint32							            m_int32RequestedImageID;
+			OpenViBE::uint32	m_ui32NumberOfCue;
+			OpenViBE::uint32	m_int32RequestedImageID;
+			OpenViBE::boolean	m_bCrossDrawn;
+			OpenViBE::boolean	m_bPictureDrawn;
+			OpenViBE::boolean	m_bPauseDrawn;
+
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pOriginalPicture;
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pScaledPicture;
 
 			::GdkColor m_oBackgroundColor;
 			::GdkColor m_oForegroundColor;
+
+			// For the time of current iteration
+			OpenViBE::float32 m_f32IterationTime;
 		};
 
 		/**
@@ -88,6 +100,9 @@ namespace OpenViBEPlugins
 			{
 				rPrototype.addSetting("Directory Path", OV_TypeId_Filename, "${Path_Data}");
 				rPrototype.addSetting("Image extension", OV_TypeId_String, "png");
+				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
+				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
+				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");
 				return true;
 			}
 
