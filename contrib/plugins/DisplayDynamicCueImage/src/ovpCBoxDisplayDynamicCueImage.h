@@ -53,7 +53,7 @@ namespace OpenViBEPlugins
 		protected:
 
 			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
-			virtual void CDisplayDynamicCueImage::sendCurrentCue(OpenViBE::uint32 ui32PreviousTime, OpenViBE::uint32 ui32CurrentTime);
+			virtual void CDisplayDynamicCueImage::sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 
 			OpenViBEToolkit::TStimulationEncoder<CDisplayDynamicCueImage> m_oEncoder;
 

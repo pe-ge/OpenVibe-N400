@@ -257,14 +257,14 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		void CDisplayDynamicCueImage::sendCurrentCue(OpenViBE::uint32 ui32PreviousTime, OpenViBE::uint32 ui32CurrentTime)
+		void CDisplayDynamicCueImage::sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
 		{
 			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
 			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
 			l_pStimulationSet->clear();		// The encoder may retain the buffer from the previous round, clear it
-			l_pStimulationSet->appendStimulation(m_eCurrentCue, ui32CurrentTime, 0);
+			l_pStimulationSet->appendStimulation(m_eCurrentCue, ui64CurrentTime, 0);
 			m_oEncoder.encodeBuffer();
-			l_pBoxIO->markOutputAsReadyToSend(0, ui32PreviousTime, ui32CurrentTime);
+			l_pBoxIO->markOutputAsReadyToSend(0, ui64PreviousTime, ui64CurrentTime);
 			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 		}
 
