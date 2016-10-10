@@ -58,10 +58,10 @@ namespace OpenViBEPlugins
 			OpenViBEToolkit::TStimulationEncoder<CDisplayDynamicCueImage> m_oEncoder;
 
 			// Box settings
-			OpenViBE::uint32 m_uint32CrossDuration;
-			OpenViBE::uint32 m_uint32PictureDuration;
-			OpenViBE::uint32 m_uint32PauseDuration;
-			OpenViBE::uint32 m_uint32TotalIterations;
+			OpenViBE::uint64 m_ui64CrossDuration;
+			OpenViBE::uint64 m_ui64PictureDuration;
+			OpenViBE::uint64 m_ui64PauseDuration;
+			OpenViBE::uint64 m_ui64TotalIterations;
 
 			// The Builder handler used to create the interface
 			::GtkBuilder* m_pBuilderInterface;
@@ -70,8 +70,8 @@ namespace OpenViBEPlugins
 
 			// For the display of the images:
 
-			OpenViBE::uint32	m_uint32NumberOfCue;
-			OpenViBE::uint32	m_uint32RequestedPictureID;
+			OpenViBE::uint32	m_ui32NumberOfCue;
+			OpenViBE::uint32	m_ui32RequestedPictureID;
 			OpenViBE::boolean	m_bRequestDraw;
 			N400Cue				m_eCurrentCue;
 
@@ -82,9 +82,9 @@ namespace OpenViBEPlugins
 			::GdkColor m_oForegroundColor;
 
 			// For the time of current iteration
-			OpenViBE::uint32	m_uint32IterationTime;
-			OpenViBE::uint32	m_uint32IterationCount;
-			OpenViBE::uint32	m_uint32ExperimentDuration;
+			OpenViBE::uint64	m_ui64IterationTime;
+			OpenViBE::uint32	m_ui32IterationCount;
+			OpenViBE::uint64	m_ui64ExperimentDuration;
 		};
 
 		/**
