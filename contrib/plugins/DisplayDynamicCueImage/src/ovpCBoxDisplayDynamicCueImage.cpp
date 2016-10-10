@@ -1,10 +1,5 @@
 #include "ovpCBoxDisplayDynamicCueImage.h"
 
-/* TODO:
- *	using regexes in function filenamesCompare
- *	 
-*/
-
 #include "boost/filesystem.hpp"
 #include <iostream>
 #include <algorithm>
@@ -32,8 +27,26 @@ namespace OpenViBEPlugins
 
 		gboolean DisplayDynamicCueImage_RedrawCallback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 		{
+			std::cout << "registering redraw callback" << std::endl;
 			reinterpret_cast<CDisplayDynamicCueImage*>(data)->redraw();
 			return TRUE;
+		}
+
+		// Called when a key is pressed on the keyboard
+		gboolean DisplayDynamicCueImage_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
+		{
+			std::cout << "registering key callback" << std::endl;
+			reinterpret_cast<CDisplayDynamicCueImage*>(data)->processKey(thisEvent->keyval);
+			return true;
+		}
+
+		/**
+		 * Called when a key has been pressed.
+		 * \param uiKey The gdk value to the pressed key.
+		 * */
+		void CDisplayDynamicCueImage::processKey(guint uiKey)
+		{
+			std::cout << uiKey << std::endl;
 		}
 
 		OpenViBE::boolean filenamesCompare(const std::pair<OpenViBE::CString, ::GdkPixbuf*>& firstElem, std::pair<OpenViBE::CString, ::GdkPixbuf*>& secondElem)
@@ -134,7 +147,7 @@ namespace OpenViBEPlugins
 
 			//load the gtk builder interface
 			m_pBuilderInterface=gtk_builder_new();
-			gtk_builder_add_from_file(m_pBuilderInterface, OpenViBE::Directories::getDataDir() + "/plugins/simple-visualisation/openvibe-simple-visualisation-DisplayCueImage.ui", NULL);
+			gtk_builder_add_from_file(m_pBuilderInterface, OpenViBE::Directories::getDataDir() + "/../../../contrib/plugins/DisplayDynamicCueImage/N400.ui", NULL);
 
 			if(!m_pBuilderInterface)
 			{
@@ -144,9 +157,10 @@ namespace OpenViBEPlugins
 
 			gtk_builder_connect_signals(m_pBuilderInterface, NULL);
 
-			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "DisplayCueImageDrawingArea"));
+			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "N400DrawingArea"));
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "expose_event", G_CALLBACK(DisplayDynamicCueImage_RedrawCallback), this);
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "size-allocate", G_CALLBACK(DisplayDynamicCueImage_SizeAllocateCallback), this);
+			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(DisplayDynamicCueImage_KeyPressCallback), this);
 
 			//set widget bg color
 			gtk_widget_modify_bg(m_pDrawingArea, GTK_STATE_NORMAL, &m_oBackgroundColor);
@@ -163,7 +177,6 @@ namespace OpenViBEPlugins
 			m_oEncoder.initialize(*this,0);
 			m_oEncoder.encodeHeader();
 			getBoxAlgorithmContext()->getDynamicBoxContext()->markOutputAsReadyToSend(0, 0, 0);
-			//sendCurrentCue(0, 0);
 
 			return true;
 		}
@@ -206,10 +219,10 @@ namespace OpenViBEPlugins
 		OpenViBE::boolean CDisplayDynamicCueImage::processClock(CMessageClock& rMessageClock)
 		{
 			// Static variables
-			static uint32 l_ui64FirstPictureTime = m_ui64CrossDuration;
-			static uint32 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
-			static uint32 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
-			static uint32 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
+			static uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
+			static uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
+			static uint64 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
+			static uint64 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
 
 			const uint64 l_ui64CurrentTime=rMessageClock.getTime();
 

@@ -45,16 +45,18 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::uint64 getClockFrequency(void){ return (128LL<<32); }
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
 			virtual OpenViBE::boolean process(void) { return true; }
+
 			virtual void redraw(void);
 			virtual void resize(OpenViBE::uint32 ui32Width, OpenViBE::uint32 ui32Height);
+			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
+			virtual void sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
+			virtual void processKey(guint uiKey);
 
 			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithm, OVP_ClassId_BoxAlgorithm_DynamicVisualCue)
 
 		protected:
 
-			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
-			virtual void CDisplayDynamicCueImage::sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
-
+			// For sending stimulations
 			OpenViBEToolkit::TStimulationEncoder<CDisplayDynamicCueImage> m_oEncoder;
 
 			// Box settings
