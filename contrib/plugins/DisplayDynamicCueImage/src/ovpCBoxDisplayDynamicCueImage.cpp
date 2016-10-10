@@ -62,7 +62,7 @@ namespace OpenViBEPlugins
 			m_ui32RequestedPictureID(1),
 			m_bRequestDraw(false), // for initial cross
 			m_eCurrentCue(CROSS),
-			m_ui64IterationTime(0),
+			m_ui64PreviousActivationTime(0),
 			m_ui32IterationCount(0),
 			m_ui64ExperimentDuration(0)
 		{
@@ -211,12 +211,10 @@ namespace OpenViBEPlugins
 			static uint32 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
 			static uint32 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
 
-			// Obtain time of current iteration
 			const uint64 l_ui64CurrentTime=rMessageClock.getTime();
-			uint64 l_ui64CurrentIterationTime = l_ui64CurrentTime % m_ui64ExperimentDuration;
 
 			// start of new iteration?
-			if (l_ui64CurrentIterationTime < m_ui64IterationTime) {
+			if (l_ui64CurrentTime < m_ui64PreviousActivationTime) {
 				m_ui32IterationCount++;
 				m_eCurrentCue = CROSS;
 				m_bRequestDraw = true;
@@ -224,6 +222,9 @@ namespace OpenViBEPlugins
 			}
 
 			if (!m_bRequestDraw) {
+				// obtain time of current iteration in ms
+				uint64 l_ui64CurrentIterationTime = (uint64)((l_ui64CurrentTime >> 16) / 65.5360) % m_ui64ExperimentDuration;
+
 				// First picture
 				if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrentIterationTime >= l_ui64FirstPictureTime)) {
 					m_bRequestDraw = true;
@@ -249,10 +250,10 @@ namespace OpenViBEPlugins
 			if(m_bRequestDraw && GTK_WIDGET(m_pDrawingArea)->window)
 			{
 				gdk_window_invalidate_rect(GTK_WIDGET(m_pDrawingArea)->window,NULL,true);
-				sendCurrentCue(m_ui64IterationTime, l_ui64CurrentIterationTime);
+				sendCurrentCue(m_ui64PreviousActivationTime, l_ui64CurrentTime);
 			}
 
-			m_ui64IterationTime = l_ui64CurrentIterationTime;
+			m_ui64PreviousActivationTime = l_ui64CurrentTime;
 
 			return true;
 		}

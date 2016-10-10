@@ -82,7 +82,7 @@ namespace OpenViBEPlugins
 			::GdkColor m_oForegroundColor;
 
 			// For the time of current iteration
-			OpenViBE::uint64	m_ui64IterationTime;
+			OpenViBE::uint64	m_ui64PreviousActivationTime;
 			OpenViBE::uint32	m_ui32IterationCount;
 			OpenViBE::uint64	m_ui64ExperimentDuration;
 		};
