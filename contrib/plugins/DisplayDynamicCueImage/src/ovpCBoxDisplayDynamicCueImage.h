@@ -53,6 +53,9 @@ namespace OpenViBEPlugins
 		protected:
 
 			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
+			virtual void CDisplayDynamicCueImage::sendCurrentCue(OpenViBE::uint32 ui32PreviousTime, OpenViBE::uint32 ui32CurrentTime);
+
+			OpenViBEToolkit::TStimulationEncoder<CDisplayDynamicCueImage> m_oEncoder;
 
 			// Box settings
 			OpenViBE::uint32 m_uint32CrossDuration;
@@ -115,6 +118,8 @@ namespace OpenViBEPlugins
 				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
 				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");
 				rPrototype.addSetting("Total iterations", OV_TypeId_Integer, "100");
+
+				rPrototype.addOutput("Time of appearance of visual cue", OV_TypeId_Stimulations);
 				return true;
 			}
 

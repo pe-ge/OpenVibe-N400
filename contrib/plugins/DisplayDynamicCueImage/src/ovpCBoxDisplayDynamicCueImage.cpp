@@ -36,7 +36,7 @@ namespace OpenViBEPlugins
 			return TRUE;
 		}
 
-		bool filenamesCompare(const std::pair<OpenViBE::CString, ::GdkPixbuf*>& firstElem, std::pair<OpenViBE::CString, ::GdkPixbuf*>& secondElem)
+		OpenViBE::boolean filenamesCompare(const std::pair<OpenViBE::CString, ::GdkPixbuf*>& firstElem, std::pair<OpenViBE::CString, ::GdkPixbuf*>& secondElem)
 		{
 			std::string firstPath = firstElem.first.toASCIIString();
 			std::string secondPath = secondElem.first.toASCIIString();
@@ -60,7 +60,7 @@ namespace OpenViBEPlugins
 			m_pDrawingArea(NULL),
 			m_uint32NumberOfCue(0),
 			m_uint32RequestedPictureID(1),
-			m_bRequestDraw(false),
+			m_bRequestDraw(false), // for initial cross
 			m_eCurrentCue(CROSS),
 			m_uint32IterationTime(0),
 			m_uint32IterationCount(0),
@@ -159,6 +159,13 @@ namespace OpenViBEPlugins
 
 			getBoxAlgorithmContext()->getVisualisationContext()->setWidget(m_pDrawingArea);
 
+			// output stimulation
+			m_oEncoder.initialize(*this,0);
+			m_oEncoder.encodeHeader();
+
+			// send cue for cross
+			sendCurrentCue(m_uint32IterationTime, m_uint32IterationTime);
+
 			return true;
 		}
 
@@ -192,6 +199,8 @@ namespace OpenViBEPlugins
 				}
 			}
 
+			m_oEncoder.uninitialize();
+
 			return true;
 		}
 
@@ -211,34 +220,52 @@ namespace OpenViBEPlugins
 				m_uint32IterationCount++;
 				m_eCurrentCue = CROSS;
 				m_bRequestDraw = true;
+				std::cout << "cross" << std::endl;
 			}
 
 			if (!m_bRequestDraw) {
 				// First picture
 				if ((m_eCurrentCue == PICTURE1) && (l_uint32CurrentIterationTime > l_uint32FirstPictureTime)) {
 					m_bRequestDraw = true;
+					std::cout << "1picture" << std::endl;
 				}
 				// First pause
 				else if ((m_eCurrentCue == PAUSE1) && (l_uint32CurrentIterationTime > l_uint32FirstPauseTime)) {
 					m_bRequestDraw = true;
+					std::cout << "1pause" << std::endl;
 				}
 				// Second picture
 				else if ((m_eCurrentCue == PICTURE2) && (l_uint32CurrentIterationTime > l_uint32SecondPictureTime)) {
 					m_bRequestDraw = true;
+					std::cout << "2pic" << std::endl;
 				}
 				// Second pause
 				else if ((m_eCurrentCue == PAUSE2) && (l_uint32CurrentIterationTime > l_uint32SecondPauseTime)) {
-					m_bRequestDraw = true;
+					m_bRequestDraw = true;					
+					std::cout << "2pause" << std::endl;
 				}
 			}
 			
 			if(m_bRequestDraw && GTK_WIDGET(m_pDrawingArea)->window)
 			{
 				gdk_window_invalidate_rect(GTK_WIDGET(m_pDrawingArea)->window,NULL,true);
+				sendCurrentCue(m_uint32IterationTime, l_uint32CurrentIterationTime);
 			}
 
 			m_uint32IterationTime = l_uint32CurrentIterationTime;
+
 			return true;
+		}
+
+		void CDisplayDynamicCueImage::sendCurrentCue(OpenViBE::uint32 ui32PreviousTime, OpenViBE::uint32 ui32CurrentTime)
+		{
+			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
+			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
+			l_pStimulationSet->clear();		// The encoder may retain the buffer from the previous round, clear it
+			l_pStimulationSet->appendStimulation(m_eCurrentCue, ui32CurrentTime, 0);
+			m_oEncoder.encodeBuffer();
+			l_pBoxIO->markOutputAsReadyToSend(0, ui32PreviousTime, ui32CurrentTime);
+			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 		}
 
 		//Callback called by GTK
