@@ -1,5 +1,5 @@
-#ifndef __OpenViBEPlugins_BoxAlgorithm_DisplayDynamicVisualCue_H__
-#define __OpenViBEPlugins_BoxAlgorithm_DisplayDynamicVisualCue_H__
+#ifndef __OpenViBEPlugins_BoxAlgorithm_N400Experiment_H__
+#define __OpenViBEPlugins_BoxAlgorithm_N400Experiment_H__
 
 #include "ovp_defines.h"
 #include <openvibe/ov_all.h>
@@ -7,19 +7,13 @@
 
 #include <gtk/gtk.h>
 #include <vector>
-//#include <string>
-//#include <map>
-//#include <deque>
 
-// The unique identifiers for the box and its descriptor.
-// Identifier are randomly chosen by the skeleton-generator.
-#define OVP_ClassId_BoxAlgorithm_DynamicVisualCue OpenViBE::CIdentifier(0x1F480B76, 0x2C9B52CF)
-#define OVP_ClassId_BoxAlgorithm_DynamicVisualCueDesc OpenViBE::CIdentifier(0x533A0915, 0x519E4B68)
-
+#define OVP_ClassId_BoxAlgorithm_N400Experiment OpenViBE::CIdentifier(0x1F480B76, 0x2C9B52CF)
+#define OVP_ClassId_BoxAlgorithm_N400ExperimentDesc OpenViBE::CIdentifier(0x533A0915, 0x519E4B68)
 
 namespace OpenViBEPlugins
 {
-	namespace SimpleVisualisation
+	namespace N400
 	{
 
 		enum N400Cue
@@ -31,12 +25,12 @@ namespace OpenViBEPlugins
 			PAUSE2		= 4
 		};
 
-		class CDisplayDynamicCueImage :
+		class CN400Experiment :
 				public OpenViBEToolkit::TBoxAlgorithm<OpenViBE::Plugins::IBoxAlgorithm>
 		{
 		public:
 
-			CDisplayDynamicCueImage(void);
+			CN400Experiment(void);
 
 			virtual void release(void) { delete this; }
 
@@ -52,12 +46,12 @@ namespace OpenViBEPlugins
 			virtual void sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 			virtual void processKey(guint uiKey);
 
-			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithm, OVP_ClassId_BoxAlgorithm_DynamicVisualCue)
+			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithm, OVP_ClassId_BoxAlgorithm_N400Experiment)
 
 		protected:
 
 			// For sending stimulations
-			OpenViBEToolkit::TStimulationEncoder<CDisplayDynamicCueImage> m_oEncoder;
+			OpenViBEToolkit::TStimulationEncoder<CN400Experiment> m_oEncoder;
 
 			// Box settings
 			OpenViBE::uint64 m_ui64CrossDuration;
@@ -92,10 +86,10 @@ namespace OpenViBEPlugins
 		/**
 		 * Plugin's description
 		 */
-		class CDisplayDynamicCueImageDesc : public OpenViBE::Plugins::IBoxAlgorithmDesc
+		class CN400ExperimentDesc : public OpenViBE::Plugins::IBoxAlgorithmDesc
 		{
 		public:
-			virtual OpenViBE::CString getName(void) const                { return OpenViBE::CString("Display dynamic cue image"); }
+			virtual OpenViBE::CString getName(void) const                { return OpenViBE::CString("N400 Experiment"); }
 			virtual OpenViBE::CString getAuthorName(void) const          { return OpenViBE::CString("Peter Gergel"); }
 			virtual OpenViBE::CString getAuthorCompanyName(void) const   { return OpenViBE::CString("FMPH UK"); }
 			virtual OpenViBE::CString getShortDescription(void) const    { return OpenViBE::CString("Display cue images on predefined logic"); }
@@ -103,10 +97,10 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::CString getCategory(void) const            { return OpenViBE::CString("Visualisation/Presentation"); }
 			virtual OpenViBE::CString getVersion(void) const             { return OpenViBE::CString("1.0"); }
 			virtual void release(void)                                   { }
-			virtual OpenViBE::CIdentifier getCreatedClass(void) const    { return OVP_ClassId_BoxAlgorithm_DynamicVisualCue; }
+			virtual OpenViBE::CIdentifier getCreatedClass(void) const    { return OVP_ClassId_BoxAlgorithm_N400Experiment; }
 
 			virtual OpenViBE::CString getStockItemName(void) const       { return OpenViBE::CString("gtk-fullscreen"); }
-			virtual OpenViBE::Plugins::IPluginObject* create(void)       { return new OpenViBEPlugins::SimpleVisualisation::CDisplayDynamicCueImage(); }
+			virtual OpenViBE::Plugins::IPluginObject* create(void)       { return new OpenViBEPlugins::N400::CN400Experiment(); }
 			virtual OpenViBE::boolean hasFunctionality(OpenViBE::Kernel::EPluginFunctionality ePF) const
 			{
 				return ePF == OpenViBE::Kernel::PluginFunctionality_Visualization;
@@ -125,7 +119,7 @@ namespace OpenViBEPlugins
 				return true;
 			}
 
-			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithmDesc, OVP_ClassId_BoxAlgorithm_DynamicVisualCueDesc)
+			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithmDesc, OVP_ClassId_BoxAlgorithm_N400ExperimentDesc)
 		};
 	};
 };

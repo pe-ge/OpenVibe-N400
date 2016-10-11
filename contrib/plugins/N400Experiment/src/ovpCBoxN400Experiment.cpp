@@ -1,4 +1,4 @@
-#include "ovpCBoxDisplayDynamicCueImage.h"
+#include "ovpCBoxN400Experiment.h"
 
 #include "boost/filesystem.hpp"
 #include <iostream>
@@ -11,32 +11,32 @@ using namespace OpenViBE::Kernel;
 using namespace OpenViBE::Plugins;
 
 using namespace OpenViBEPlugins;
-using namespace OpenViBEPlugins::SimpleVisualisation;
+using namespace OpenViBEPlugins::N400;
 
 using namespace boost::filesystem;
 
 namespace OpenViBEPlugins
 {
-	namespace SimpleVisualisation
+	namespace N400
 	{
-		gboolean DisplayDynamicCueImage_SizeAllocateCallback(GtkWidget *widget, GtkAllocation *allocation, gpointer data)
+		gboolean N400Experiment_SizeAllocateCallback(GtkWidget *widget, GtkAllocation *allocation, gpointer data)
 		{
-			reinterpret_cast<CDisplayDynamicCueImage*>(data)->resize((uint32)allocation->width, (uint32)allocation->height);
+			reinterpret_cast<CN400Experiment*>(data)->resize((uint32)allocation->width, (uint32)allocation->height);
 			return FALSE;
 		}
 
-		gboolean DisplayDynamicCueImage_RedrawCallback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
+		gboolean N400Experiment_RedrawCallback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 		{
 			std::cout << "registering redraw callback" << std::endl;
-			reinterpret_cast<CDisplayDynamicCueImage*>(data)->redraw();
+			reinterpret_cast<CN400Experiment*>(data)->redraw();
 			return TRUE;
 		}
 
 		// Called when a key is pressed on the keyboard
-		gboolean DisplayDynamicCueImage_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
+		gboolean N400Experiment_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
 		{
 			std::cout << "registering key callback" << std::endl;
-			reinterpret_cast<CDisplayDynamicCueImage*>(data)->processKey(thisEvent->keyval);
+			reinterpret_cast<CN400Experiment*>(data)->processKey(thisEvent->keyval);
 			return true;
 		}
 
@@ -44,7 +44,7 @@ namespace OpenViBEPlugins
 		 * Called when a key has been pressed.
 		 * \param uiKey The gdk value to the pressed key.
 		 * */
-		void CDisplayDynamicCueImage::processKey(guint uiKey)
+		void CN400Experiment::processKey(guint uiKey)
 		{
 			std::cout << uiKey << std::endl;
 		}
@@ -63,7 +63,7 @@ namespace OpenViBEPlugins
 			return firstId < secondId;
 		}
 
-		CDisplayDynamicCueImage::CDisplayDynamicCueImage(void) :
+		CN400Experiment::CN400Experiment(void) :
 			m_ui64CrossDuration(0),
 			m_ui64PictureDuration(0),
 			m_ui64PauseDuration(0),
@@ -90,7 +90,7 @@ namespace OpenViBEPlugins
 			m_oForegroundColor.blue = 0xFFFF;
 		}
 
-		OpenViBE::boolean CDisplayDynamicCueImage::initialize()
+		OpenViBE::boolean CN400Experiment::initialize()
 		{
 			//>>>> Reading Settings:
 
@@ -147,7 +147,7 @@ namespace OpenViBEPlugins
 
 			//load the gtk builder interface
 			m_pBuilderInterface=gtk_builder_new();
-			gtk_builder_add_from_file(m_pBuilderInterface, OpenViBE::Directories::getDataDir() + "/../../../contrib/plugins/DisplayDynamicCueImage/N400.ui", NULL);
+			gtk_builder_add_from_file(m_pBuilderInterface, OpenViBE::Directories::getDataDir() + "/../../../contrib/plugins/N400Experiment/N400.ui", NULL);
 
 			if(!m_pBuilderInterface)
 			{
@@ -158,9 +158,9 @@ namespace OpenViBEPlugins
 			gtk_builder_connect_signals(m_pBuilderInterface, NULL);
 
 			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "N400DrawingArea"));
-			g_signal_connect(G_OBJECT(m_pDrawingArea), "expose_event", G_CALLBACK(DisplayDynamicCueImage_RedrawCallback), this);
-			g_signal_connect(G_OBJECT(m_pDrawingArea), "size-allocate", G_CALLBACK(DisplayDynamicCueImage_SizeAllocateCallback), this);
-			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(DisplayDynamicCueImage_KeyPressCallback), this);
+			g_signal_connect(G_OBJECT(m_pDrawingArea), "expose_event", G_CALLBACK(N400Experiment_RedrawCallback), this);
+			g_signal_connect(G_OBJECT(m_pDrawingArea), "size-allocate", G_CALLBACK(N400Experiment_SizeAllocateCallback), this);
+			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
 
 			//set widget bg color
 			gtk_widget_modify_bg(m_pDrawingArea, GTK_STATE_NORMAL, &m_oBackgroundColor);
@@ -181,7 +181,7 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		OpenViBE::boolean CDisplayDynamicCueImage::uninitialize()
+		OpenViBE::boolean CN400Experiment::uninitialize()
 		{
 
 			//destroy drawing area
@@ -216,7 +216,7 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		OpenViBE::boolean CDisplayDynamicCueImage::processClock(CMessageClock& rMessageClock)
+		OpenViBE::boolean CN400Experiment::processClock(CMessageClock& rMessageClock)
 		{
 			// Static variables
 			static uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
@@ -271,7 +271,7 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		void CDisplayDynamicCueImage::sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
+		void CN400Experiment::sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
 		{
 			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
 			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
@@ -283,7 +283,7 @@ namespace OpenViBEPlugins
 		}
 
 		//Callback called by GTK
-		void CDisplayDynamicCueImage::redraw()
+		void CN400Experiment::redraw()
 		{
 			switch (m_eCurrentCue)
 			{
@@ -300,14 +300,14 @@ namespace OpenViBEPlugins
 			m_bRequestDraw = false;
 		}
 
-		void CDisplayDynamicCueImage::drawCuePicture(OpenViBE::uint32 uint32CueID)
+		void CN400Experiment::drawCuePicture(OpenViBE::uint32 uint32CueID)
 		{
 			gint l_iWindowWidth = m_pDrawingArea->allocation.width;
 			gint l_iWindowHeight = m_pDrawingArea->allocation.height;
 			gdk_draw_pixbuf(m_pDrawingArea->window, NULL, m_pScaledPicture[uint32CueID].second, 0, 0, 0, 0, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
 		}
 
-		void CDisplayDynamicCueImage::resize(uint32 ui32Width, uint32 ui32Height)
+		void CN400Experiment::resize(uint32 ui32Width, uint32 ui32Height)
 		{
 			for (uint32 i = 0; i < m_ui32NumberOfCue; i++) {
 				if (m_pScaledPicture[i].second) {

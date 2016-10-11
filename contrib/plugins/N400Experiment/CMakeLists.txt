@@ -1,4 +1,4 @@
-PROJECT(openvibe-plugins-contrib-display-dynamic-cue-image)
+PROJECT(openvibe-plugins-contrib-n400-experiment)
 
 SET(PROJECT_VERSION_MAJOR ${OV_GLOBAL_VERSION_MAJOR})
 SET(PROJECT_VERSION_MINOR ${OV_GLOBAL_VERSION_MINOR})
