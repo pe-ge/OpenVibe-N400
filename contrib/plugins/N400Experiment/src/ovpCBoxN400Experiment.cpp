@@ -46,7 +46,10 @@ namespace OpenViBEPlugins
 		 * */
 		void CN400Experiment::processKey(guint uiKey)
 		{
-			std::cout << uiKey << std::endl;
+			if (!m_bProcessingKeys) return;
+
+			m_ui32PressedButton = uiKey;
+			m_bRequestProcessButton = true;
 		}
 
 		OpenViBE::boolean filenamesCompare(const std::pair<OpenViBE::CString, ::GdkPixbuf*>& firstElem, std::pair<OpenViBE::CString, ::GdkPixbuf*>& secondElem)
@@ -73,11 +76,16 @@ namespace OpenViBEPlugins
 			m_pDrawingArea(NULL),
 			m_ui32NumberOfCue(0),
 			m_ui32RequestedPictureID(1),
-			m_bRequestDraw(false), // for initial cross
+			m_bRequestDraw(false),
 			m_eCurrentCue(CROSS),
 			m_ui64PreviousActivationTime(0),
-			m_ui32IterationCount(0),
-			m_ui64ExperimentDuration(0)
+			m_ui64IterationDuration(0),
+			m_ui32RightButtonCode(0),
+			m_ui32WrongButtonCode(0),
+			m_ui32UnsureButtonCode(0),
+			m_bProcessingKeys(false),
+			m_ui32PressedButton(0),
+			m_bRequestProcessButton(false)
 		{
 			m_oBackgroundColor.pixel = 0;
 			m_oBackgroundColor.red = 0xFFFF;
@@ -103,11 +111,17 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(1, l_sImageExtension);
 
 			// Durations
-			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 2);
-			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 3);
-			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext( ), 4);
+			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
+			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
+			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
 
-			m_ui64ExperimentDuration = m_ui64CrossDuration + 2 * m_ui64PictureDuration + 2 * m_ui64PauseDuration;
+			m_ui64IterationDuration = m_ui64CrossDuration + 2 * m_ui64PictureDuration + 2 * m_ui64PauseDuration;
+
+			// Button codes
+			// Numeric keyboard we are using sends 65457 for NUM1 so we need to remap it
+			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
+			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6) + 65456;
+			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 7) + 65456;
 
 			// Load files inside directory
 			path p(l_sDirectoryPath.toASCIIString());
@@ -174,7 +188,7 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->getVisualisationContext()->setWidget(m_pDrawingArea);
 
 			// output stimulation
-			m_oEncoder.initialize(*this,0);
+			m_oEncoder.initialize(*this, 0);
 			m_oEncoder.encodeHeader();
 			getBoxAlgorithmContext()->getDynamicBoxContext()->markOutputAsReadyToSend(0, 0, 0);
 
@@ -223,12 +237,12 @@ namespace OpenViBEPlugins
 			static uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
 			static uint64 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
 			static uint64 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
+			static uint64 l_ui64AnswerTime = l_ui64SecondPauseTime + 500;
 
 			const uint64 l_ui64CurrentTime=rMessageClock.getTime();
 
 			// start of new iteration?
 			if (l_ui64CurrentTime < m_ui64PreviousActivationTime) {
-				m_ui32IterationCount++;
 				m_eCurrentCue = CROSS;
 				m_bRequestDraw = true;
 				std::cout << "cross" << std::endl;
@@ -236,34 +250,50 @@ namespace OpenViBEPlugins
 
 			if (!m_bRequestDraw) {
 				// obtain time of current iteration in ms
-				uint64 l_ui64CurrentIterationTime = (uint64)((l_ui64CurrentTime >> 16) / 65.5360) % m_ui64ExperimentDuration;
+				uint64 l_ui64CurrentIterationTime = (uint64)((l_ui64CurrentTime >> 16) / 65.5360) % m_ui64IterationDuration;
 
 				// First picture
-				if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrentIterationTime >= l_ui64FirstPictureTime)) {
+				if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrentIterationTime >= l_ui64FirstPictureTime))
+				{
 					m_bRequestDraw = true;
 					std::cout << "1picture" << std::endl;
 				}
 				// First pause
-				else if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrentIterationTime >= l_ui64FirstPauseTime)) {
+				else if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrentIterationTime >= l_ui64FirstPauseTime))
+				{
 					m_bRequestDraw = true;
 					std::cout << "1pause" << std::endl;
 				}
 				// Second picture
-				else if ((m_eCurrentCue == PICTURE2) && (l_ui64CurrentIterationTime >= l_ui64SecondPictureTime)) {
+				else if ((m_eCurrentCue == PICTURE2) && (l_ui64CurrentIterationTime >= l_ui64SecondPictureTime))
+				{
 					m_bRequestDraw = true;
 					std::cout << "2pic" << std::endl;
 				}
 				// Second pause
-				else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrentIterationTime >= l_ui64SecondPauseTime)) {
+				else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrentIterationTime >= l_ui64SecondPauseTime))
+				{
 					m_bRequestDraw = true;					
 					std::cout << "2pause" << std::endl;
 				}
+				// Answer
+				else if ((m_eCurrentCue == ANSWER) && (l_ui64CurrentIterationTime >= l_ui64AnswerTime))
+				{
+					m_bProcessingKeys = true;
+				}
 			}
 			
-			if(m_bRequestDraw && GTK_WIDGET(m_pDrawingArea)->window)
+			if (m_bRequestDraw && GTK_WIDGET(m_pDrawingArea)->window)
 			{
 				gdk_window_invalidate_rect(GTK_WIDGET(m_pDrawingArea)->window,NULL,true);
 				sendCurrentCue(m_ui64PreviousActivationTime, l_ui64CurrentTime);
+			}
+
+			if (m_bRequestProcessButton)
+			{
+				sendPressedButton(m_ui64PreviousActivationTime, l_ui64CurrentTime);
+				m_bProcessingKeys = false;
+				m_bRequestProcessButton = false;
 			}
 
 			m_ui64PreviousActivationTime = l_ui64CurrentTime;
@@ -271,15 +301,26 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		void CN400Experiment::sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
+		void CN400Experiment::sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
 		{
 			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
 			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
 			l_pStimulationSet->clear();		// The encoder may retain the buffer from the previous round, clear it
-			l_pStimulationSet->appendStimulation(m_eCurrentCue, ui64CurrentTime, 0);
+			l_pStimulationSet->appendStimulation(ui64StimulationIdentifier, ui64CurrentTime, 0);
 			m_oEncoder.encodeBuffer();
 			l_pBoxIO->markOutputAsReadyToSend(0, ui64PreviousTime, ui64CurrentTime);
 			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
+		}
+
+		void CN400Experiment::sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
+		{
+			sendStimulation(m_eCurrentCue, ui64PreviousTime, ui64CurrentTime);
+		}
+
+		void CN400Experiment::sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
+		{
+			sendStimulation(m_ui32PressedButton, ui64PreviousTime, ui64CurrentTime);
+			
 		}
 
 		//Callback called by GTK
@@ -296,7 +337,7 @@ namespace OpenViBEPlugins
 					if (m_ui32RequestedPictureID == m_pOriginalPicture.size()) m_ui32RequestedPictureID = 1;
 					break;
 			}
-			m_eCurrentCue = N400Cue((m_eCurrentCue + 1) % 5);
+			m_eCurrentCue = N400Cue((m_eCurrentCue + 1) % TOTAL_CUES);
 			m_bRequestDraw = false;
 		}
 

@@ -22,7 +22,9 @@ namespace OpenViBEPlugins
 			PICTURE1	= 1,
 			PAUSE1		= 2,
 			PICTURE2	= 3,
-			PAUSE2		= 4
+			PAUSE2		= 4,
+			ANSWER		= 5,
+			TOTAL_CUES	= 6
 		};
 
 		class CN400Experiment :
@@ -40,10 +42,14 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
 			virtual OpenViBE::boolean process(void) { return true; }
 
+			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
+			virtual void sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
+			virtual void CN400Experiment::sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
+
 			virtual void redraw(void);
 			virtual void resize(OpenViBE::uint32 ui32Width, OpenViBE::uint32 ui32Height);
 			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
-			virtual void sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
+			
 			virtual void processKey(guint uiKey);
 
 			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithm, OVP_ClassId_BoxAlgorithm_N400Experiment)
@@ -79,8 +85,16 @@ namespace OpenViBEPlugins
 
 			// For the time of current iteration
 			OpenViBE::uint64	m_ui64PreviousActivationTime;
-			OpenViBE::uint32	m_ui32IterationCount;
-			OpenViBE::uint64	m_ui64ExperimentDuration;
+			OpenViBE::uint64	m_ui64IterationDuration;
+
+			// Button codes
+			OpenViBE::uint32	m_ui32RightButtonCode;
+			OpenViBE::uint32	m_ui32WrongButtonCode;
+			OpenViBE::uint32	m_ui32UnsureButtonCode;
+
+			OpenViBE::boolean	m_bProcessingKeys;
+			OpenViBE::uint32	m_ui32PressedButton;
+			OpenViBE::boolean	m_bRequestProcessButton;
 		};
 
 		/**
@@ -92,8 +106,8 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::CString getName(void) const                { return OpenViBE::CString("N400 Experiment"); }
 			virtual OpenViBE::CString getAuthorName(void) const          { return OpenViBE::CString("Peter Gergel"); }
 			virtual OpenViBE::CString getAuthorCompanyName(void) const   { return OpenViBE::CString("FMPH UK"); }
-			virtual OpenViBE::CString getShortDescription(void) const    { return OpenViBE::CString("Display cue images on predefined logic"); }
-			virtual OpenViBE::CString getDetailedDescription(void) const { return OpenViBE::CString("Display cue images on predefined logic"); }
+			virtual OpenViBE::CString getShortDescription(void) const    { return OpenViBE::CString("N400 Experiment"); }
+			virtual OpenViBE::CString getDetailedDescription(void) const { return OpenViBE::CString("N400 Experimentc"); }
 			virtual OpenViBE::CString getCategory(void) const            { return OpenViBE::CString("Visualisation/Presentation"); }
 			virtual OpenViBE::CString getVersion(void) const             { return OpenViBE::CString("1.0"); }
 			virtual void release(void)                                   { }
@@ -109,11 +123,13 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean getBoxPrototype(OpenViBE::Kernel::IBoxProto& rPrototype) const
 			{
 				rPrototype.addSetting("Directory Path", OV_TypeId_Filename, "${Path_Data}");
-				rPrototype.addSetting("Image extension", OV_TypeId_String, "png");
+				rPrototype.addSetting("Image extension", OV_TypeId_String, "jpg");
 				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
 				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
 				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");
-				rPrototype.addSetting("Total iterations", OV_TypeId_Integer, "100");
+				rPrototype.addSetting("Right answer button", OV_TypeId_Integer, "1");
+				rPrototype.addSetting("Wrong answer button", OV_TypeId_Integer, "3");
+				rPrototype.addSetting("Unsure button", OV_TypeId_Integer, "2");
 
 				rPrototype.addOutput("Time of appearance of visual cue", OV_TypeId_Stimulations);
 				return true;
