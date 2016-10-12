@@ -299,7 +299,6 @@ namespace OpenViBEPlugins
 		void CN400Experiment::sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
 		{
 			sendStimulation(m_ui32PressedButton, ui64PreviousTime, ui64CurrentTime);
-			
 		}
 
 		// Callbacks
