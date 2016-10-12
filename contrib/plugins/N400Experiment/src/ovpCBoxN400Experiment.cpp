@@ -40,18 +40,6 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		/**
-		 * Called when a key has been pressed.
-		 * \param uiKey The gdk value to the pressed key.
-		 * */
-		void CN400Experiment::processKey(guint uiKey)
-		{
-			if (!m_bProcessingKeys) return;
-
-			m_ui32PressedButton = uiKey;
-			m_bRequestProcessButton = true;
-		}
-
 		OpenViBE::boolean filenamesCompare(const std::pair<OpenViBE::CString, ::GdkPixbuf*>& firstElem, std::pair<OpenViBE::CString, ::GdkPixbuf*>& secondElem)
 		{
 			std::string firstPath = firstElem.first.toASCIIString();
@@ -73,7 +61,6 @@ namespace OpenViBEPlugins
 			m_pBuilderInterface(NULL),
 			m_pMainWindow(NULL),
 			m_pDrawingArea(NULL),
-			m_ui32NumberOfCue(0),
 			m_ui32RequestedPictureID(1),
 			m_bRequestDraw(false),
 			m_bNewIteration(true),
@@ -144,8 +131,6 @@ namespace OpenViBEPlugins
 				}
 			}
 
-			m_ui32NumberOfCue = m_pOriginalPicture.size();
-
 			// Sort files according to digits in beginning of filename
 			std::sort(m_pOriginalPicture.begin(), m_pOriginalPicture.end(), filenamesCompare);
 			std::sort(m_pScaledPicture.begin(), m_pScaledPicture.end(), filenamesCompare);
@@ -210,7 +195,8 @@ namespace OpenViBEPlugins
 				m_pBuilderInterface=NULL;
 			}
 
-			for (uint32 i = 0; i < m_ui32NumberOfCue; i++) {
+			// unref all pictures
+			for (uint32 i = 0; i < m_pOriginalPicture.size(); i++) {
 				if (m_pOriginalPicture[i].second)
 				{
 					g_object_unref(G_OBJECT(m_pOriginalPicture[i].second));
@@ -230,7 +216,7 @@ namespace OpenViBEPlugins
 
 		OpenViBE::boolean CN400Experiment::processClock(CMessageClock& rMessageClock)
 		{
-			// Static variables
+			// precomputing time variables
 			static const uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
 			static const uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
 			static const uint64 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
@@ -240,12 +226,10 @@ namespace OpenViBEPlugins
 			const uint64 l_ui64CurrentTime = rMessageClock.getTime();
 			const uint64 l_ui64CurrenTimeMs = (uint64)((l_ui64CurrentTime >> 16) / 65.5360);
 
-			// start of new iteration?
 			if (m_bNewIteration) {
 				m_eCurrentCue = CROSS;
 				m_bRequestDraw = true;
 				m_bNewIteration = false;
-				std::cout << "cross" << std::endl;
 				m_ui64NewIterationTime = l_ui64CurrenTimeMs;
 			}
 
@@ -254,25 +238,21 @@ namespace OpenViBEPlugins
 				if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPictureTime))
 				{
 					m_bRequestDraw = true;
-					std::cout << "1picture" << std::endl;
 				}
 				// First pause
 				else if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPauseTime))
 				{
 					m_bRequestDraw = true;
-					std::cout << "1pause" << std::endl;
 				}
 				// Second picture
 				else if ((m_eCurrentCue == PICTURE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPictureTime))
 				{
 					m_bRequestDraw = true;
-					std::cout << "2pic" << std::endl;
 				}
 				// Second pause
 				else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPauseTime))
 				{
 					m_bRequestDraw = true;					
-					std::cout << "2pause" << std::endl;
 				}
 				// Answer
 				else if ((m_eCurrentCue == ANSWER) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64AnswerTime))
@@ -322,7 +302,8 @@ namespace OpenViBEPlugins
 			
 		}
 
-		//Callback called by GTK
+		// Callbacks
+
 		void CN400Experiment::redraw()
 		{
 			if (!m_bRequestDraw) return;
@@ -342,21 +323,33 @@ namespace OpenViBEPlugins
 			m_bRequestDraw = false;
 		}
 
-		void CN400Experiment::drawCuePicture(OpenViBE::uint32 uint32CueID)
-		{
-			gint l_iWindowWidth = m_pDrawingArea->allocation.width;
-			gint l_iWindowHeight = m_pDrawingArea->allocation.height;
-			gdk_draw_pixbuf(m_pDrawingArea->window, NULL, m_pScaledPicture[uint32CueID].second, 0, 0, 0, 0, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
-		}
-
 		void CN400Experiment::resize(uint32 ui32Width, uint32 ui32Height)
 		{
-			for (uint32 i = 0; i < m_ui32NumberOfCue; i++) {
+			for (uint32 i = 0; i < m_pScaledPicture.size(); i++) {
 				if (m_pScaledPicture[i].second) {
 					g_object_unref(G_OBJECT(m_pScaledPicture[i].second));
 				}
 				m_pScaledPicture[i].second = gdk_pixbuf_scale_simple(m_pOriginalPicture[i].second, ui32Width, ui32Height, GDK_INTERP_BILINEAR);
 			}
+		}
+
+		/**
+		 * Called when a key has been pressed.
+		 * \param uiKey The gdk value to the pressed key.
+		 * */
+		void CN400Experiment::processKey(guint uiKey)
+		{
+			if (!m_bProcessingKeys) return;
+
+			m_ui32PressedButton = uiKey;
+			m_bRequestProcessButton = true;
+		}
+
+		void CN400Experiment::drawCuePicture(OpenViBE::uint32 uint32CueID)
+		{
+			gint l_iWindowWidth = m_pDrawingArea->allocation.width;
+			gint l_iWindowHeight = m_pDrawingArea->allocation.height;
+			gdk_draw_pixbuf(m_pDrawingArea->window, NULL, m_pScaledPicture[uint32CueID].second, 0, 0, 0, 0, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
 		}
 	};
 };

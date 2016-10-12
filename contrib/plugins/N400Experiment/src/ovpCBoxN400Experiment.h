@@ -42,15 +42,17 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
 			virtual OpenViBE::boolean process(void) { return true; }
 
+			// stimulation-related methods
 			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 			virtual void sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
-			virtual void CN400Experiment::sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
+			virtual void sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 
+			// callback methods
 			virtual void redraw(void);
 			virtual void resize(OpenViBE::uint32 ui32Width, OpenViBE::uint32 ui32Height);
-			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
-			
 			virtual void processKey(guint uiKey);
+
+			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
 
 			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithm, OVP_ClassId_BoxAlgorithm_N400Experiment)
 
@@ -69,9 +71,6 @@ namespace OpenViBEPlugins
 			::GtkWidget*  m_pMainWindow;
 			::GtkWidget*  m_pDrawingArea;
 
-			// For the display of the images:
-
-			OpenViBE::uint32	m_ui32NumberOfCue;
 			OpenViBE::uint32	m_ui32RequestedPictureID;
 			OpenViBE::boolean	m_bRequestDraw;
 			OpenViBE::boolean	m_bNewIteration;
