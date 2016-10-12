@@ -70,16 +70,16 @@ namespace OpenViBEPlugins
 			m_ui64CrossDuration(0),
 			m_ui64PictureDuration(0),
 			m_ui64PauseDuration(0),
-			m_ui64TotalIterations(0),
 			m_pBuilderInterface(NULL),
 			m_pMainWindow(NULL),
 			m_pDrawingArea(NULL),
 			m_ui32NumberOfCue(0),
 			m_ui32RequestedPictureID(1),
 			m_bRequestDraw(false),
+			m_bNewIteration(true),
 			m_eCurrentCue(CROSS),
 			m_ui64PreviousActivationTime(0),
-			m_ui64IterationDuration(0),
+			m_ui64NewIterationTime(0),
 			m_ui32RightButtonCode(0),
 			m_ui32WrongButtonCode(0),
 			m_ui32UnsureButtonCode(0),
@@ -114,8 +114,6 @@ namespace OpenViBEPlugins
 			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
 			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
 			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
-
-			m_ui64IterationDuration = m_ui64CrossDuration + 2 * m_ui64PictureDuration + 2 * m_ui64PauseDuration;
 
 			// Button codes
 			// Numeric keyboard we are using sends 65457 for NUM1 so we need to remap it
@@ -233,51 +231,51 @@ namespace OpenViBEPlugins
 		OpenViBE::boolean CN400Experiment::processClock(CMessageClock& rMessageClock)
 		{
 			// Static variables
-			static uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
-			static uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
-			static uint64 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
-			static uint64 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
-			static uint64 l_ui64AnswerTime = l_ui64SecondPauseTime + 500;
+			static const uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
+			static const uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
+			static const uint64 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
+			static const uint64 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
+			static const uint64 l_ui64AnswerTime = l_ui64SecondPauseTime + 500;
 
-			const uint64 l_ui64CurrentTime=rMessageClock.getTime();
+			const uint64 l_ui64CurrentTime = rMessageClock.getTime();
+			const uint64 l_ui64CurrenTimeMs = (uint64)((l_ui64CurrentTime >> 16) / 65.5360);
 
 			// start of new iteration?
-			if (l_ui64CurrentTime < m_ui64PreviousActivationTime) {
+			if (m_bNewIteration) {
 				m_eCurrentCue = CROSS;
 				m_bRequestDraw = true;
+				m_bNewIteration = false;
 				std::cout << "cross" << std::endl;
+				m_ui64NewIterationTime = l_ui64CurrenTimeMs;
 			}
 
 			if (!m_bRequestDraw) {
-				// obtain time of current iteration in ms
-				uint64 l_ui64CurrentIterationTime = (uint64)((l_ui64CurrentTime >> 16) / 65.5360) % m_ui64IterationDuration;
-
 				// First picture
-				if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrentIterationTime >= l_ui64FirstPictureTime))
+				if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPictureTime))
 				{
 					m_bRequestDraw = true;
 					std::cout << "1picture" << std::endl;
 				}
 				// First pause
-				else if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrentIterationTime >= l_ui64FirstPauseTime))
+				else if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPauseTime))
 				{
 					m_bRequestDraw = true;
 					std::cout << "1pause" << std::endl;
 				}
 				// Second picture
-				else if ((m_eCurrentCue == PICTURE2) && (l_ui64CurrentIterationTime >= l_ui64SecondPictureTime))
+				else if ((m_eCurrentCue == PICTURE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPictureTime))
 				{
 					m_bRequestDraw = true;
 					std::cout << "2pic" << std::endl;
 				}
 				// Second pause
-				else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrentIterationTime >= l_ui64SecondPauseTime))
+				else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPauseTime))
 				{
 					m_bRequestDraw = true;					
 					std::cout << "2pause" << std::endl;
 				}
 				// Answer
-				else if ((m_eCurrentCue == ANSWER) && (l_ui64CurrentIterationTime >= l_ui64AnswerTime))
+				else if ((m_eCurrentCue == ANSWER) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64AnswerTime))
 				{
 					m_bProcessingKeys = true;
 				}
@@ -294,6 +292,7 @@ namespace OpenViBEPlugins
 				sendPressedButton(m_ui64PreviousActivationTime, l_ui64CurrentTime);
 				m_bProcessingKeys = false;
 				m_bRequestProcessButton = false;
+				m_bNewIteration = true;
 			}
 
 			m_ui64PreviousActivationTime = l_ui64CurrentTime;
@@ -326,6 +325,8 @@ namespace OpenViBEPlugins
 		//Callback called by GTK
 		void CN400Experiment::redraw()
 		{
+			if (!m_bRequestDraw) return;
+
 			switch (m_eCurrentCue)
 			{
 				case CROSS:

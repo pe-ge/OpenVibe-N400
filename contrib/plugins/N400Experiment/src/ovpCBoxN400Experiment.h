@@ -63,7 +63,6 @@ namespace OpenViBEPlugins
 			OpenViBE::uint64 m_ui64CrossDuration;
 			OpenViBE::uint64 m_ui64PictureDuration;
 			OpenViBE::uint64 m_ui64PauseDuration;
-			OpenViBE::uint64 m_ui64TotalIterations;
 
 			// The Builder handler used to create the interface
 			::GtkBuilder* m_pBuilderInterface;
@@ -75,6 +74,7 @@ namespace OpenViBEPlugins
 			OpenViBE::uint32	m_ui32NumberOfCue;
 			OpenViBE::uint32	m_ui32RequestedPictureID;
 			OpenViBE::boolean	m_bRequestDraw;
+			OpenViBE::boolean	m_bNewIteration;
 			N400Cue				m_eCurrentCue;
 
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pOriginalPicture;
@@ -83,9 +83,8 @@ namespace OpenViBEPlugins
 			::GdkColor m_oBackgroundColor;
 			::GdkColor m_oForegroundColor;
 
-			// For the time of current iteration
 			OpenViBE::uint64	m_ui64PreviousActivationTime;
-			OpenViBE::uint64	m_ui64IterationDuration;
+			OpenViBE::uint64	m_ui64NewIterationTime;
 
 			// Button codes
 			OpenViBE::uint32	m_ui32RightButtonCode;
