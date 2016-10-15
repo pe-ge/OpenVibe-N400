@@ -27,7 +27,7 @@ namespace OpenViBEPlugins
 
 		gboolean N400Experiment_RedrawCallback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 		{
-			std::cout << "registering redraw callback" << std::endl;
+			//std::cout << "registering redraw callback" << std::endl;
 			reinterpret_cast<CN400Experiment*>(data)->redraw();
 			return TRUE;
 		}
@@ -35,7 +35,7 @@ namespace OpenViBEPlugins
 		// Called when a key is pressed on the keyboard
 		gboolean N400Experiment_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
 		{
-			std::cout << "registering key callback" << std::endl;
+			//std::cout << "registering key callback" << std::endl;
 			reinterpret_cast<CN400Experiment*>(data)->processKey(thisEvent->keyval);
 			return true;
 		}
@@ -93,28 +93,24 @@ namespace OpenViBEPlugins
 			CString l_sDirectoryPath;
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(0, l_sDirectoryPath);
 
-			// Image extension
-			CString l_sImageExtension;
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(1, l_sImageExtension);
-
 			// Durations
-			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
-			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
-			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
+			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
+			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
+			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
 
 			// Button codes
 			// Numeric keyboard we are using sends 65457 for NUM1 so we need to remap it
-			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
-			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6) + 65456;
-			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 7) + 65456;
+			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4) + 65456;
+			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
+			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6) + 65456;
 
-			// Load files inside directory
+			// Load all files inside directory
 			path p(l_sDirectoryPath.toASCIIString());
 			directory_iterator end_itr;
 
 			for (directory_iterator itr(p); itr != end_itr; ++itr)
 			{
-				if (is_regular_file(itr->path()) && itr->path().extension() == ("." + l_sImageExtension).toASCIIString())
+				if (is_regular_file(itr->path())
 				{
 					CString filename(itr->path().string().c_str());
 					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
@@ -131,16 +127,20 @@ namespace OpenViBEPlugins
 				}
 			}
 
+			if (m_pOriginalPicture.empty()){
+				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error, no images in directory!";
+				return false;
+			}
+
 			// Sort files according to digits in beginning of filename
 			std::sort(m_pOriginalPicture.begin(), m_pOriginalPicture.end(), filenamesCompare);
 			std::sort(m_pScaledPicture.begin(), m_pScaledPicture.end(), filenamesCompare);
 
-			/* std::cout << "LOADING FILES" << std::endl;
+			std::cout << "LOADING FILES" << std::endl;
 			for (std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>::const_iterator it = m_pOriginalPicture.begin(); it != m_pOriginalPicture.end(); it++)
 			{
 				std::cout << it->first.toASCIIString() << std::endl;
-			} */
-			
+			}
 
 			//load the gtk builder interface
 			m_pBuilderInterface=gtk_builder_new();

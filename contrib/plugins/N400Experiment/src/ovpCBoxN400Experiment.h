@@ -121,7 +121,6 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean getBoxPrototype(OpenViBE::Kernel::IBoxProto& rPrototype) const
 			{
 				rPrototype.addSetting("Directory Path", OV_TypeId_Filename, "${Path_Data}");
-				rPrototype.addSetting("Image extension", OV_TypeId_String, "jpg");
 				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
 				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
 				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");
