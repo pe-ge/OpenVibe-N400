@@ -73,7 +73,8 @@ namespace OpenViBEPlugins
 			m_bProcessingKeys(false),
 			m_ui32PressedButton(0),
 			m_bRequestProcessButton(false),
-			m_bRequestBeep(false)
+			m_bRequestBeep(false),
+			m_bExperimentStarted(false)
 		{
 			m_oBackgroundColor.pixel = 0;
 			m_oBackgroundColor.red = 0xFFFF;
@@ -217,6 +218,8 @@ namespace OpenViBEPlugins
 
 		OpenViBE::boolean CN400Experiment::processClock(CMessageClock& rMessageClock)
 		{
+			if (!m_bExperimentStarted) return true;
+
 			// precomputing time variables
 			static const uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
 			static const uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
@@ -353,6 +356,8 @@ namespace OpenViBEPlugins
 		 * */
 		void CN400Experiment::processKey(guint uiKey)
 		{
+			if (uiKey == 32) m_bExperimentStarted = true; // 32 = spacebar
+
 			if (!m_bProcessingKeys) return;
 
 			if (!validKey(uiKey))

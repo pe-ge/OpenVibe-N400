@@ -97,6 +97,8 @@ namespace OpenViBEPlugins
 			OpenViBE::boolean	m_bRequestProcessButton;
 
 			OpenViBE::boolean	m_bRequestBeep;
+
+			OpenViBE::boolean	m_bExperimentStarted;
 		};
 
 		/**
