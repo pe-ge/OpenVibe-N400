@@ -72,7 +72,8 @@ namespace OpenViBEPlugins
 			m_ui32UnsureButtonCode(0),
 			m_bProcessingKeys(false),
 			m_ui32PressedButton(0),
-			m_bRequestProcessButton(false)
+			m_bRequestProcessButton(false),
+			m_bRequestBeep(false)
 		{
 			m_oBackgroundColor.pixel = 0;
 			m_oBackgroundColor.red = 0xFFFF;
@@ -99,7 +100,7 @@ namespace OpenViBEPlugins
 			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
 
 			// Button codes
-			// Numeric keyboard we are using sends 65457 for NUM1 so we need to remap it
+			// NNumeric keypad we use sends 65457 for NUM1 so we need to remap it
 			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4) + 65456;
 			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
 			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6) + 65456;
@@ -110,7 +111,7 @@ namespace OpenViBEPlugins
 
 			for (directory_iterator itr(p); itr != end_itr; ++itr)
 			{
-				if (is_regular_file(itr->path())
+				if (is_regular_file(itr->path()))
 				{
 					CString filename(itr->path().string().c_str());
 					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
@@ -260,6 +261,10 @@ namespace OpenViBEPlugins
 					m_bProcessingKeys = true;
 				}
 			}
+
+			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
+			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
+			l_pStimulationSet->clear();
 			
 			if (m_bRequestDraw && GTK_WIDGET(m_pDrawingArea)->window)
 			{
@@ -275,6 +280,12 @@ namespace OpenViBEPlugins
 				m_bNewIteration = true;
 			}
 
+			if (m_bRequestBeep)
+			{
+				sendBeep(m_ui64PreviousActivationTime, l_ui64CurrentTime);
+				m_bRequestBeep = false;
+			}
+
 			m_ui64PreviousActivationTime = l_ui64CurrentTime;
 
 			return true;
@@ -284,7 +295,6 @@ namespace OpenViBEPlugins
 		{
 			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
 			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
-			l_pStimulationSet->clear();		// The encoder may retain the buffer from the previous round, clear it
 			l_pStimulationSet->appendStimulation(ui64StimulationIdentifier, ui64CurrentTime, 0);
 			m_oEncoder.encodeBuffer();
 			l_pBoxIO->markOutputAsReadyToSend(0, ui64PreviousTime, ui64CurrentTime);
@@ -299,6 +309,11 @@ namespace OpenViBEPlugins
 		void CN400Experiment::sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
 		{
 			sendStimulation(m_ui32PressedButton, ui64PreviousTime, ui64CurrentTime);
+		}
+
+		void CN400Experiment::sendBeep(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
+		{
+			sendStimulation(OVTK_StimulationId_Beep, ui64PreviousTime, ui64CurrentTime);
 		}
 
 		// Callbacks
@@ -340,8 +355,19 @@ namespace OpenViBEPlugins
 		{
 			if (!m_bProcessingKeys) return;
 
-			m_ui32PressedButton = uiKey;
+			if (!validKey(uiKey))
+			{
+				m_bRequestBeep = true;
+				return;
+			}
+
+			m_ui32PressedButton = uiKey - 65456;
 			m_bRequestProcessButton = true;
+		}
+
+		OpenViBE::boolean CN400Experiment::validKey(guint uiKey)
+		{
+			return m_ui32RightButtonCode == uiKey || m_ui32WrongButtonCode == uiKey || m_ui32UnsureButtonCode == uiKey;
 		}
 
 		void CN400Experiment::drawCuePicture(OpenViBE::uint32 uint32CueID)

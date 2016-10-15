@@ -46,11 +46,13 @@ namespace OpenViBEPlugins
 			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 			virtual void sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 			virtual void sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
+			virtual void sendBeep(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 
 			// callback methods
 			virtual void redraw(void);
 			virtual void resize(OpenViBE::uint32 ui32Width, OpenViBE::uint32 ui32Height);
 			virtual void processKey(guint uiKey);
+			virtual OpenViBE::boolean validKey(guint uiKey);
 
 			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
 
@@ -93,6 +95,8 @@ namespace OpenViBEPlugins
 			OpenViBE::boolean	m_bProcessingKeys;
 			OpenViBE::uint32	m_ui32PressedButton;
 			OpenViBE::boolean	m_bRequestProcessButton;
+
+			OpenViBE::boolean	m_bRequestBeep;
 		};
 
 		/**
