@@ -366,7 +366,7 @@ namespace OpenViBEPlugins
 				return;
 			}
 
-			m_ui32PressedButton = uiKey - 65456;
+			m_ui32PressedButton = (uiKey - 65457) + OVTK_StimulationId_Label_0A; // map NUM1 = Label_0A, NUM2 = Label_0B, NUM3 = Label_0C
 			m_bRequestProcessButton = true;
 		}
 
