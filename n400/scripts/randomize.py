@@ -51,13 +51,15 @@ if __name__ == '__main__':
         image = Image.new("RGBA", (W, H))
         draw = ImageDraw.Draw(image)
 
+        # prepare text
         text = os.path.split(old_filename)[1].split('.')[0]  # remove extension
+        text = text.capitalize()
+        text = text.replace('_', ' ')
+
         w, h = font.getsize(text)
         draw.text(((W-w)/2, (H-h)/2), text.capitalize(), fill="black", font=font)
-        draw.text((W/2, 0), text.capitalize(), fill="black", font=font)
 
         new_filename = os.path.split(new_filename)[1].split('_')
-        # # print(os.path.split(new_filename))
         prefix = int(new_filename[0]) + 1
         new_filename = '{prefix:03}_{filename}'.format(
                 prefix=prefix, filename='_'.join(new_filename[1:]))
