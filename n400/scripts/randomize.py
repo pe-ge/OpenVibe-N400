@@ -88,3 +88,8 @@ if __name__ == '__main__':
                 prefix=prefix, filename='_'.join(new_filename[1:]))
         dest_file = os.path.join(dest_dir, new_filename)
         image.save(dest_file, "PNG")
+
+    # save file order to txt
+    with open(dest_dir + '.txt', 'w') as f:
+        for filename in sorted(glob.glob(os.path.join(dest_dir, '*.*'))):
+            f.write('{}\n'.format(os.path.split(filename)[-1]))
