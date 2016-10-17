@@ -48,8 +48,7 @@ if __name__ == '__main__':
     draw = ImageDraw.Draw(image)
     draw.line([W/2, 0, W/2, H],  fill="black", width=10)
     draw.line([0, H/2, W, H/2],  fill="black", width=10)
-    image.save(os.path.join(dest_dir, "000_cross.png"),"PNG")
-
+    image.save(os.path.join(dest_dir, "000_cross.png"), "PNG")
 
     # shuffle filenames
     random.shuffle(filenames)
@@ -58,7 +57,7 @@ if __name__ == '__main__':
     new_filenames = {}
     for idx, filename in enumerate(filenames):
         directory, img_name = os.path.split(filename)
-        new_img_name = '{idx:03}_{img_name}'.format(idx=(2 * idx + 1), img_name=img_name)
+        new_img_name = '{:03}_{}'.format(2 * idx + 1, img_name)
         new_filename = os.path.join(dest_dir, new_img_name)
         new_filenames[filename] = new_filename
 
