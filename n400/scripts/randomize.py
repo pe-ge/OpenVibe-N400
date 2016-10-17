@@ -43,6 +43,14 @@ if __name__ == '__main__':
         dest_dir = os.path.join(src_dir, dest_dir_name + str(count))
     os.makedirs(dest_dir)
 
+    # draw cross into first image
+    image = Image.new("RGBA", (W, H))
+    draw = ImageDraw.Draw(image)
+    draw.line([W/2, 0, W/2, H],  fill="black", width=10)
+    draw.line([0, H/2, W, H/2],  fill="black", width=10)
+    image.save(os.path.join(dest_dir, "000_cross.png"),"PNG")
+
+
     # shuffle filenames
     random.shuffle(filenames)
 
