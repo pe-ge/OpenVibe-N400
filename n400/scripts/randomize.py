@@ -4,6 +4,24 @@ import os
 import random
 from PIL import Image, ImageDraw, ImageFont
 
+
+def create_random_dict(max_items):
+    def equals(rand_keys, rand_values):
+        return any([elem[0] == elem[1] for elem in zip(rand_keys, rand_values)])
+
+    rand_keys = [2*(i+1) for i in range(max_items)]
+    random.shuffle(rand_keys)
+    rand_keys = rand_keys[::2]  # we need only half
+
+    rand_values = rand_keys[:]
+    random.shuffle(rand_values)
+
+    # we dont want any key to be equal with its value
+    while(equals(rand_keys, rand_values)):
+        random.shuffle(rand_values)
+
+    return dict(zip(rand_keys, rand_values))
+
 if __name__ == '__main__':
     src_dir = os.curdir
     dest_dir_name = 'experiment'
@@ -36,6 +54,8 @@ if __name__ == '__main__':
         new_filename = os.path.join(dest_dir, new_img_name)
         new_filenames[filename] = new_filename
 
+    filenames_map = create_random_dict(len(new_filenames))
+
     # copy files to new folder
     for old_filename, new_filename in new_filenames.items():
         # copy
@@ -61,6 +81,9 @@ if __name__ == '__main__':
 
         new_filename = os.path.split(new_filename)[1].split('_')
         prefix = int(new_filename[0]) + 1
+        # remap prefix
+        prefix = filenames_map.get(prefix, prefix)
+
         new_filename = '{prefix:03}_{filename}'.format(
                 prefix=prefix, filename='_'.join(new_filename[1:]))
         dest_file = os.path.join(dest_dir, new_filename)
