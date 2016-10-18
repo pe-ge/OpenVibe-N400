@@ -32,8 +32,8 @@ if __name__ == '__main__':
         filenames.append(filename)
 
     # text image params
-    W, H = (400, 400)
-    font = ImageFont.truetype("verdana.ttf", 40)
+    W, H = (600, 600)
+    font = ImageFont.truetype("verdana.ttf", 50)
 
     # create new folder (check whether old one exists)
     count = 1
@@ -46,8 +46,9 @@ if __name__ == '__main__':
     # draw cross into first image
     image = Image.new("RGBA", (W, H))
     draw = ImageDraw.Draw(image)
-    draw.line([W/2, 0, W/2, H],  fill="black", width=10)
-    draw.line([0, H/2, W, H/2],  fill="black", width=10)
+    border = 100
+    draw.line([W/2, border, W/2, H - border],  fill="black", width=10)
+    draw.line([border, H/2, W - border, H/2],  fill="black", width=10)
     image.save(os.path.join(dest_dir, "000_cross.png"), "PNG")
 
     # shuffle filenames
