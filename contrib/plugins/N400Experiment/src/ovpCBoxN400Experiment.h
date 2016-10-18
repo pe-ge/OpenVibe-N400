@@ -7,6 +7,7 @@
 
 #include <gtk/gtk.h>
 #include <vector>
+#include <map>
 
 #define OVP_ClassId_BoxAlgorithm_N400Experiment OpenViBE::CIdentifier(0x1F480B76, 0x2C9B52CF)
 #define OVP_ClassId_BoxAlgorithm_N400ExperimentDesc OpenViBE::CIdentifier(0x533A0915, 0x519E4B68)
@@ -87,10 +88,11 @@ namespace OpenViBEPlugins
 			OpenViBE::uint64	m_ui64PreviousActivationTime;
 			OpenViBE::uint64	m_ui64NewIterationTime;
 
-			// Button codes
-			OpenViBE::uint32	m_ui32RightButtonCode;
-			OpenViBE::uint32	m_ui32WrongButtonCode;
-			OpenViBE::uint32	m_ui32UnsureButtonCode;
+			// Buttons
+			std::map<OpenViBE::CString, OpenViBE::uint32> m_mButtonCodes;
+			OpenViBE::CString	m_sRightButton;
+			OpenViBE::CString	m_sWrongButton;
+			OpenViBE::CString	m_sUnsureButton;
 
 			OpenViBE::boolean	m_bProcessingKeys;
 			OpenViBE::uint32	m_ui32PressedButton;
@@ -131,9 +133,9 @@ namespace OpenViBEPlugins
 				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
 				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
 				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");
-				rPrototype.addSetting("Right answer button", OV_TypeId_Integer, "1");
-				rPrototype.addSetting("Wrong answer button", OV_TypeId_Integer, "3");
-				rPrototype.addSetting("Unsure button", OV_TypeId_Integer, "2");
+				rPrototype.addSetting("Right answer button", OV_TypeId_String, "1");
+				rPrototype.addSetting("Wrong answer button", OV_TypeId_String, "3");
+				rPrototype.addSetting("Unsure button", OV_TypeId_String, "2");
 
 				rPrototype.addOutput("Time of appearance of visual cue", OV_TypeId_Stimulations);
 				return true;

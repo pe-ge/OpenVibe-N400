@@ -27,7 +27,6 @@ namespace OpenViBEPlugins
 
 		gboolean N400Experiment_RedrawCallback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 		{
-			//std::cout << "registering redraw callback" << std::endl;
 			reinterpret_cast<CN400Experiment*>(data)->redraw();
 			return TRUE;
 		}
@@ -36,6 +35,7 @@ namespace OpenViBEPlugins
 		gboolean N400Experiment_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
 		{
 			//std::cout << "registering key callback" << std::endl;
+			std::cout << thisEvent->keyval << std::endl;
 			reinterpret_cast<CN400Experiment*>(data)->processKey(thisEvent->keyval);
 			return true;
 		}
@@ -67,9 +67,9 @@ namespace OpenViBEPlugins
 			m_eCurrentCue(CROSS),
 			m_ui64PreviousActivationTime(0),
 			m_ui64NewIterationTime(0),
-			m_ui32RightButtonCode(0),
-			m_ui32WrongButtonCode(0),
-			m_ui32UnsureButtonCode(0),
+			m_sRightButton(NULL),
+			m_sWrongButton(NULL),
+			m_sUnsureButton(NULL),
 			m_bProcessingKeys(false),
 			m_ui32PressedButton(0),
 			m_bRequestProcessButton(false),
@@ -101,10 +101,9 @@ namespace OpenViBEPlugins
 			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
 
 			// Button codes
-			// NNumeric keypad we use sends 65457 for NUM1 so we need to remap it
-			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
-			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6) + 65456;
-			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 7) + 65456;
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(5, m_sRightButton);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(6, m_sWrongButton);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(7, m_sUnsureButton);
 
 			// Get experiment directory
 			std::string l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/experiment";
@@ -170,7 +169,7 @@ namespace OpenViBEPlugins
 			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "N400DrawingArea"));
 			gtk_widget_set_size_request(m_pDrawingArea, l_ui32WindowWidth, l_ui32WindowHeight);
 
-			g_signal_connect(G_OBJECT(m_pDrawingArea), "expose_event", G_CALLBACK(N400Experiment_RedrawCallback), this);
+			//g_signal_connect(G_OBJECT(m_pDrawingArea), "expose_event", G_CALLBACK(N400Experiment_RedrawCallback), this);
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "size-allocate", G_CALLBACK(N400Experiment_SizeAllocateCallback), this);
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
 
@@ -184,6 +183,22 @@ namespace OpenViBEPlugins
 			gtk_widget_modify_fg(m_pDrawingArea, GTK_STATE_ACTIVE, &m_oForegroundColor);
 
 			getBoxAlgorithmContext()->getVisualisationContext()->setWidget(m_pDrawingArea);
+
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("Enter", 65293));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("+", 65451));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("-", 65453));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type(".", 46));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("00", 48));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("0", 65456));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("1", 65457));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("2", 65458));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("3", 65459));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("4", 65460));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("5", 65461));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("6", 65462));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("7", 65463));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("8", 65464));
+			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("9", 65465));
 
 			// output stimulation
 			m_oEncoder.initialize(*this, 0);
@@ -284,7 +299,8 @@ namespace OpenViBEPlugins
 			
 			if (m_bRequestDraw && GTK_WIDGET(m_pDrawingArea)->window)
 			{
-				gdk_window_invalidate_rect(GTK_WIDGET(m_pDrawingArea)->window,NULL,true);
+				//gdk_window_invalidate_rect(GTK_WIDGET(m_pDrawingArea)->window,NULL,true);
+				redraw();
 				sendCurrentCue(m_ui64PreviousActivationTime, l_ui64CurrentTime);
 			}
 
@@ -379,13 +395,18 @@ namespace OpenViBEPlugins
 				return;
 			}
 
-			m_ui32PressedButton = (uiKey - 65457) + OVTK_StimulationId_Label_0A; // NUM1 = Label_0A, NUM2 = Label_0B, NUM3 = Label_0C
+			if (m_mButtonCodes[m_sRightButton] == uiKey) m_ui32PressedButton = OVTK_StimulationId_Label_0A;
+			if (m_mButtonCodes[m_sWrongButton] == uiKey) m_ui32PressedButton = OVTK_StimulationId_Label_0B;
+			if (m_mButtonCodes[m_sUnsureButton] == uiKey) m_ui32PressedButton = OVTK_StimulationId_Label_0C;
+
 			m_bRequestProcessButton = true;
 		}
 
 		OpenViBE::boolean CN400Experiment::validKey(guint uiKey)
 		{
-			return m_ui32RightButtonCode == uiKey || m_ui32WrongButtonCode == uiKey || m_ui32UnsureButtonCode == uiKey;
+			return m_mButtonCodes[m_sRightButton] == uiKey || 
+				m_mButtonCodes[m_sWrongButton] == uiKey || 
+				m_mButtonCodes[m_sUnsureButton] == uiKey;
 		}
 
 		void CN400Experiment::drawCuePicture(OpenViBE::uint32 uint32CueID)
