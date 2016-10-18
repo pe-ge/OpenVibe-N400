@@ -23,7 +23,6 @@ namespace OpenViBEPlugins
 		gboolean N400Experiment_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
 		{
 			//std::cout << "registering key callback" << std::endl;
-			std::cout << thisEvent->keyval << std::endl;
 			reinterpret_cast<CN400Experiment*>(data)->processKey(thisEvent->keyval);
 			return true;
 		}
@@ -113,11 +112,11 @@ namespace OpenViBEPlugins
 				{
 					CString filename(itr->path().string().c_str());
 					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
-					
+					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pScaledPicture, l_ui32WindowWidth, l_ui32WindowHeight, GDK_INTERP_BILINEAR);
 					if (l_pOriginalPicture)
 					{
 						m_pOriginalPicture.push_back(std::make_pair(filename, l_pOriginalPicture));
-						m_pScaledPicture.push_back(std::make_pair(filename, nullptr));
+						m_pScaledPicture.push_back(std::make_pair(filename, l_pScaledPicture));
 					}
 					else
 					{
@@ -157,6 +156,7 @@ namespace OpenViBEPlugins
 			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "N400DrawingArea"));
 			gtk_widget_set_size_request(m_pDrawingArea, l_ui32WindowWidth, l_ui32WindowHeight);
 
+			g_signal_connect(G_OBJECT(m_pDrawingArea), "size-allocate", G_CALLBACK(N400Experiment_SizeAllocateCallback), this);
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
 
 			//set widget bg color
@@ -357,16 +357,6 @@ namespace OpenViBEPlugins
 			}
 			m_eCurrentCue = N400Cue((m_eCurrentCue + 1) % TOTAL_CUES);
 			m_bRequestDraw = false;
-		}
-
-		void CN400Experiment::resize(uint32 ui32Width, uint32 ui32Height)
-		{
-			for (uint32 i = 0; i < m_pScaledPicture.size(); i++) {
-				if (m_pScaledPicture[i].second) {
-					g_object_unref(G_OBJECT(m_pScaledPicture[i].second));
-				}
-				m_pScaledPicture[i].second = gdk_pixbuf_scale_simple(m_pOriginalPicture[i].second, ui32Width, ui32Height, GDK_INTERP_BILINEAR);
-			}
 		}
 
 		/**
