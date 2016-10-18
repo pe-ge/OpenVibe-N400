@@ -55,7 +55,8 @@ namespace OpenViBEPlugins
 			virtual void processKey(guint uiKey);
 			virtual OpenViBE::boolean validKey(guint uiKey);
 
-			virtual void drawCuePicture(OpenViBE::uint32 uint32CueID);
+			// drawing
+			virtual void drawPicture(OpenViBE::uint32 uint32CueID);
 
 			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithm, OVP_ClassId_BoxAlgorithm_N400Experiment)
 

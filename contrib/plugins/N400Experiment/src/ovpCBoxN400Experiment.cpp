@@ -19,18 +19,6 @@ namespace OpenViBEPlugins
 {
 	namespace N400
 	{
-		gboolean N400Experiment_SizeAllocateCallback(GtkWidget *widget, GtkAllocation *allocation, gpointer data)
-		{
-			reinterpret_cast<CN400Experiment*>(data)->resize((uint32)allocation->width, (uint32)allocation->height);
-			return FALSE;
-		}
-
-		gboolean N400Experiment_RedrawCallback(GtkWidget *widget, GdkEventExpose *event, gpointer data)
-		{
-			reinterpret_cast<CN400Experiment*>(data)->redraw();
-			return TRUE;
-		}
-
 		// Called when a key is pressed on the keyboard
 		gboolean N400Experiment_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
 		{
@@ -169,8 +157,6 @@ namespace OpenViBEPlugins
 			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "N400DrawingArea"));
 			gtk_widget_set_size_request(m_pDrawingArea, l_ui32WindowWidth, l_ui32WindowHeight);
 
-			//g_signal_connect(G_OBJECT(m_pDrawingArea), "expose_event", G_CALLBACK(N400Experiment_RedrawCallback), this);
-			g_signal_connect(G_OBJECT(m_pDrawingArea), "size-allocate", G_CALLBACK(N400Experiment_SizeAllocateCallback), this);
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
 
 			//set widget bg color
@@ -357,12 +343,16 @@ namespace OpenViBEPlugins
 			switch (m_eCurrentCue)
 			{
 				case CROSS:
-					drawCuePicture(0);
+					drawPicture(0);
 					break;
 				case PICTURE1:
 				case PICTURE2:
-					drawCuePicture(m_ui32RequestedPictureID++);
+					drawPicture(m_ui32RequestedPictureID++);
 					if (m_ui32RequestedPictureID == m_pOriginalPicture.size()) m_ui32RequestedPictureID = 1;
+					break;
+				case PAUSE1:
+				case PAUSE2:
+					gdk_window_clear(m_pDrawingArea->window);
 					break;
 			}
 			m_eCurrentCue = N400Cue((m_eCurrentCue + 1) % TOTAL_CUES);
@@ -409,7 +399,7 @@ namespace OpenViBEPlugins
 				m_mButtonCodes[m_sUnsureButton] == uiKey;
 		}
 
-		void CN400Experiment::drawCuePicture(OpenViBE::uint32 uint32CueID)
+		void CN400Experiment::drawPicture(OpenViBE::uint32 uint32CueID)
 		{
 			gint l_iWindowWidth = m_pDrawingArea->allocation.width;
 			gint l_iWindowHeight = m_pDrawingArea->allocation.height;
