@@ -126,6 +126,8 @@ namespace OpenViBEPlugins
 
 			virtual OpenViBE::boolean getBoxPrototype(OpenViBE::Kernel::IBoxProto& rPrototype) const
 			{
+				rPrototype.addSetting("Window width", OV_TypeId_Integer, "600");
+				rPrototype.addSetting("Window height", OV_TypeId_Integer, "600");
 				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
 				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
 				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");

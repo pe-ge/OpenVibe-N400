@@ -91,16 +91,20 @@ namespace OpenViBEPlugins
 		{
 			//>>>> Reading Settings:
 
+			// Window size
+			OpenViBE::uint32 l_ui32WindowWidth		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 0);
+			OpenViBE::uint32 l_ui32WindowHeight		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
+
 			// Durations
-			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 0);
-			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
-			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
+			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
+			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
+			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
 
 			// Button codes
 			// NNumeric keypad we use sends 65457 for NUM1 so we need to remap it
-			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3) + 65456;
-			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4) + 65456;
-			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
+			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
+			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6) + 65456;
+			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 7) + 65456;
 
 			// Get experiment directory
 			std::string l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/experiment";
@@ -131,6 +135,7 @@ namespace OpenViBEPlugins
 					else
 					{
 						getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_ImportantWarning << "Error couldn't load ressource file : " << filename << "!\n";
+						return false;
 					}
 				}
 			}
@@ -144,16 +149,16 @@ namespace OpenViBEPlugins
 			std::sort(m_pOriginalPicture.begin(), m_pOriginalPicture.end(), filenamesCompare);
 			std::sort(m_pScaledPicture.begin(), m_pScaledPicture.end(), filenamesCompare);
 
-			std::cout << "LOADING FILES" << std::endl;
+			/* std::cout << "LOADING FILES" << std::endl;
 			for (std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>::const_iterator it = m_pOriginalPicture.begin(); it != m_pOriginalPicture.end(); it++)
 			{
 				std::cout << it->first.toASCIIString() << std::endl;
-			}
+			} */
 
 			//load the gtk builder interface
 			m_pBuilderInterface=gtk_builder_new();
 			gtk_builder_add_from_file(m_pBuilderInterface, OpenViBE::Directories::getDataDir() + "/../../../contrib/plugins/N400Experiment/N400.ui", NULL);
-
+		
 			if(!m_pBuilderInterface)
 			{
 				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_ImportantWarning << "Couldn't load the interface !";
@@ -163,6 +168,8 @@ namespace OpenViBEPlugins
 			gtk_builder_connect_signals(m_pBuilderInterface, NULL);
 
 			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "N400DrawingArea"));
+			gtk_widget_set_size_request(m_pDrawingArea, l_ui32WindowWidth, l_ui32WindowHeight);
+
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "expose_event", G_CALLBACK(N400Experiment_RedrawCallback), this);
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "size-allocate", G_CALLBACK(N400Experiment_SizeAllocateCallback), this);
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
