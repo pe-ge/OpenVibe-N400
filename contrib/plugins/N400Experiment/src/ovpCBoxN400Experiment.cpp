@@ -91,23 +91,29 @@ namespace OpenViBEPlugins
 		{
 			//>>>> Reading Settings:
 
-			// Image directory path
-			CString l_sDirectoryPath;
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(0, l_sDirectoryPath);
-
 			// Durations
-			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
-			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
-			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
+			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 0);
+			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
+			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
 
 			// Button codes
 			// NNumeric keypad we use sends 65457 for NUM1 so we need to remap it
-			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4) + 65456;
-			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
-			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6) + 65456;
+			m_ui32RightButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3) + 65456;
+			m_ui32WrongButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4) + 65456;
+			m_ui32UnsureButtonCode	= (OpenViBE::uint32)FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5) + 65456;
+
+			// Get experiment directory
+			std::string l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/experiment";
+			OpenViBE::uint64 experimentCount = 1;
+			while (boost::filesystem::exists(l_sExperimentDirectory + std::to_string(experimentCount)))
+			{
+				experimentCount++;
+			}
+			experimentCount--;
+			l_sExperimentDirectory += std::to_string(experimentCount);
 
 			// Load all files inside directory
-			path p(l_sDirectoryPath.toASCIIString());
+			path p(l_sExperimentDirectory);
 			directory_iterator end_itr;
 
 			for (directory_iterator itr(p); itr != end_itr; ++itr)
@@ -366,7 +372,7 @@ namespace OpenViBEPlugins
 				return;
 			}
 
-			m_ui32PressedButton = (uiKey - 65457) + OVTK_StimulationId_Label_0A; // map NUM1 = Label_0A, NUM2 = Label_0B, NUM3 = Label_0C
+			m_ui32PressedButton = (uiKey - 65457) + OVTK_StimulationId_Label_0A; // NUM1 = Label_0A, NUM2 = Label_0B, NUM3 = Label_0C
 			m_bRequestProcessButton = true;
 		}
 
