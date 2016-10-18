@@ -112,7 +112,7 @@ namespace OpenViBEPlugins
 				{
 					CString filename(itr->path().string().c_str());
 					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
-					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pScaledPicture, l_ui32WindowWidth, l_ui32WindowHeight, GDK_INTERP_BILINEAR);
+					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pOriginalPicture, l_ui32WindowWidth, l_ui32WindowHeight, GDK_INTERP_BILINEAR);
 					if (l_pOriginalPicture)
 					{
 						m_pOriginalPicture.push_back(std::make_pair(filename, l_pOriginalPicture));
@@ -156,7 +156,6 @@ namespace OpenViBEPlugins
 			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "N400DrawingArea"));
 			gtk_widget_set_size_request(m_pDrawingArea, l_ui32WindowWidth, l_ui32WindowHeight);
 
-			g_signal_connect(G_OBJECT(m_pDrawingArea), "size-allocate", G_CALLBACK(N400Experiment_SizeAllocateCallback), this);
 			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
 
 			//set widget bg color

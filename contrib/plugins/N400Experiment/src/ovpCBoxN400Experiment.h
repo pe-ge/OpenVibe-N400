@@ -51,7 +51,6 @@ namespace OpenViBEPlugins
 
 			// callback methods
 			virtual void redraw(void);
-			virtual void resize(OpenViBE::uint32 ui32Width, OpenViBE::uint32 ui32Height);
 			virtual void processKey(guint uiKey);
 			virtual OpenViBE::boolean validKey(guint uiKey);
 
