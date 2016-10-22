@@ -200,11 +200,11 @@ namespace OpenViBEPlugins
 			if (!m_bExperimentStarted) return true;
 
 			// precomputing time variables
-			static const uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
-			static const uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
-			static const uint64 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
-			static const uint64 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
-			static const uint64 l_ui64AnswerTime = l_ui64SecondPauseTime + 500;
+			const uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
+			const uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
+			const uint64 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
+			const uint64 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
+			const uint64 l_ui64AnswerTime = l_ui64SecondPauseTime + 500;
 
 			const uint64 l_ui64CurrentTime = rMessageClock.getTime();
 			const uint64 l_ui64CurrenTimeMs = (uint64)((l_ui64CurrentTime >> 16) / 65.5360);
