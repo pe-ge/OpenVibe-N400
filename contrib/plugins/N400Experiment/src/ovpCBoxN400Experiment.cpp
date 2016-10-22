@@ -44,7 +44,9 @@ namespace OpenViBEPlugins
 		CN400Experiment::CN400Experiment(void) :
 			m_ui64CrossDuration(0),
 			m_ui64PictureDuration(0),
-			m_ui64PauseDuration(0),
+			m_ui64FirstPauseDuration(0),
+			m_ui64SecondPauseDuration(0),
+			m_ui64ThirdPauseDuration(0),
 			m_pMainWindow(NULL),
 			m_ui32RequestedPictureID(1),
 			m_bRequestDraw(false),
@@ -68,18 +70,20 @@ namespace OpenViBEPlugins
 			//>>>> Reading Settings:
 
 			// Window size
-			m_ui32PictureWidth		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 0);
-			m_ui32PictureHeight		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
+			m_ui32PictureWidth			= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 0);
+			m_ui32PictureHeight			= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
 
 			// Durations
-			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
-			m_ui64PictureDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
-			m_ui64PauseDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
+			m_ui64CrossDuration			= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
+			m_ui64PictureDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
+			m_ui64FirstPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
+			m_ui64SecondPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5);
+			m_ui64ThirdPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6);
 
 			// Button codes
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(5, m_sRightButton);
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(6, m_sWrongButton);
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(7, m_sUnsureButton);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(7, m_sRightButton);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(8, m_sWrongButton);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(9, m_sUnsureButton);
 
 			// Get experiment directory
 			std::string l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/experiment";
@@ -175,36 +179,45 @@ namespace OpenViBEPlugins
 			if (!m_bExperimentStarted) return true;
 
 			// precomputing time variables
-			const uint64 l_ui64FirstPictureTime = m_ui64CrossDuration;
-			const uint64 l_ui64FirstPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
-			const uint64 l_ui64SecondPictureTime = l_ui64FirstPauseTime + m_ui64PauseDuration;
-			const uint64 l_ui64SecondPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
-			const uint64 l_ui64AnswerTime = l_ui64SecondPauseTime + 500;
+			const uint64 l_ui64FirstPauseTime = m_ui64CrossDuration;
+			const uint64 l_ui64FirstPictureTime = l_ui64FirstPauseTime + m_ui64FirstPauseDuration;
+			const uint64 l_ui64SecondPauseTime = l_ui64FirstPictureTime + m_ui64PictureDuration;
+			const uint64 l_ui64SecondPictureTime = l_ui64SecondPauseTime + m_ui64SecondPauseDuration;
+			const uint64 l_ui64ThirdPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
+			const uint64 l_ui64AnswerTime = l_ui64ThirdPauseTime + m_ui64ThirdPauseDuration;
 
 			const uint64 l_ui64CurrentTime = rMessageClock.getTime();
 			const uint64 l_ui64CurrenTimeMs = (uint64)((l_ui64CurrentTime >> 16) / 65.5360);
 
 			if (m_bNewIteration) {
-				if (m_ui32RequestedPictureID == m_vDataset1->size())
+				if (m_ui32RequestedPictureID == m_vDataset1->size()) // were all pictures used?
 				{
-					// experiment stopped
+					// stop experiment
 					sendStimulation(OVTK_StimulationId_ExperimentStop, m_ui64PreviousActivationTime, l_ui64CurrentTime);
 					return true;
 				}
 				m_eCurrentCue = CROSS;
-				m_bRequestDraw = true;
 				m_bNewIteration = false;
 				m_ui64NewIterationTime = l_ui64CurrenTimeMs;
 			}
 
 			if (!m_bRequestDraw) {
+				// Cross
+				if (m_eCurrentCue == CROSS)
+				{
+					m_bRequestDraw = true;
+				}
+				if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPauseTime))
+				{
+					m_bRequestDraw = true;
+				}
 				// First picture
 				if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPictureTime))
 				{
 					m_bRequestDraw = true;
 				}
-				// First pause
-				else if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPauseTime))
+				// Second pause
+				else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPauseTime))
 				{
 					m_bRequestDraw = true;
 				}
@@ -213,8 +226,8 @@ namespace OpenViBEPlugins
 				{
 					m_bRequestDraw = true;
 				}
-				// Second pause
-				else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPauseTime))
+				// Third pause
+				else if ((m_eCurrentCue == PAUSE3) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64ThirdPauseTime))
 				{
 					m_bRequestDraw = true;					
 				}
@@ -332,6 +345,7 @@ namespace OpenViBEPlugins
 					break;
 				case PAUSE1:
 				case PAUSE2:
+				case PAUSE3:
 					gdk_window_clear(m_pMainWindow->window);
 					break;
 			}

@@ -20,12 +20,13 @@ namespace OpenViBEPlugins
 		enum N400Cue
 		{
 			CROSS		= 0,
-			PICTURE1	= 1,
-			PAUSE1		= 2,
-			PICTURE2	= 3,
-			PAUSE2		= 4,
-			ANSWER		= 5,
-			TOTAL_CUES	= 6
+			PAUSE1		= 1,
+			PICTURE1	= 2,
+			PAUSE2		= 3,
+			PICTURE2	= 4,
+			PAUSE3		= 5,
+			ANSWER		= 6,
+			TOTAL_CUES	= 7
 		};
 
 		class CN400Experiment :
@@ -68,7 +69,9 @@ namespace OpenViBEPlugins
 
 			OpenViBE::uint64	m_ui64CrossDuration;
 			OpenViBE::uint64	m_ui64PictureDuration;
-			OpenViBE::uint64	m_ui64PauseDuration;
+			OpenViBE::uint64	m_ui64FirstPauseDuration;
+			OpenViBE::uint64	m_ui64SecondPauseDuration;
+			OpenViBE::uint64	m_ui64ThirdPauseDuration;
 
 			::GtkWidget*		m_pMainWindow;
 
@@ -128,12 +131,14 @@ namespace OpenViBEPlugins
 				rPrototype.addSetting("Picture height", OV_TypeId_Integer, "600");
 				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
 				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
-				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");
+				rPrototype.addSetting("First pause duration in ms", OV_TypeId_Integer, "500");
+				rPrototype.addSetting("Second pause duration in ms", OV_TypeId_Integer, "2000");
+				rPrototype.addSetting("Third pause duration in ms", OV_TypeId_Integer, "500");
 				rPrototype.addSetting("Right answer button", OV_TypeId_String, "1");
 				rPrototype.addSetting("Wrong answer button", OV_TypeId_String, "3");
 				rPrototype.addSetting("Unsure button", OV_TypeId_String, "2");
 
-				rPrototype.addOutput("Time of appearance of visual cue", OV_TypeId_Stimulations);
+				rPrototype.addOutput("N400 related stimulations", OV_TypeId_Stimulations);
 				return true;
 			}
 
