@@ -43,6 +43,7 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
 			virtual OpenViBE::boolean process(void) { return true; }
 
+			virtual std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* loadDataset(std::string experimentDirectory);
 			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 
 			// callback methods
@@ -75,8 +76,8 @@ namespace OpenViBEPlugins
 			OpenViBE::boolean	m_bNewIteration;
 			N400Cue				m_eCurrentCue;
 
-			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pOriginalPicture;
-			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pScaledPicture;
+			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* m_vDataset1;
+			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* m_vDataset2;
 
 			OpenViBE::uint64	m_ui64PreviousActivationTime;
 			OpenViBE::uint64	m_ui64NewIterationTime;
@@ -94,6 +95,7 @@ namespace OpenViBEPlugins
 			OpenViBE::boolean	m_bRequestBeep;
 
 			OpenViBE::boolean	m_bExperimentStarted;
+			OpenViBE::boolean	m_bDataset1Chosen;
 		};
 
 		/**

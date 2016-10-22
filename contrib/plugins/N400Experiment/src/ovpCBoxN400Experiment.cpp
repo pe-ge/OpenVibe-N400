@@ -59,7 +59,8 @@ namespace OpenViBEPlugins
 			m_ui32PressedButton(0),
 			m_bRequestProcessButton(false),
 			m_bRequestBeep(false),
-			m_bExperimentStarted(false)
+			m_bExperimentStarted(false),
+			m_bDataset1Chosen(true)
 		{}
 
 		OpenViBE::boolean CN400Experiment::initialize()
@@ -82,58 +83,33 @@ namespace OpenViBEPlugins
 
 			// Get experiment directory
 			std::string l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/experiment";
-			OpenViBE::uint64 experimentCount = 1;
-			while (boost::filesystem::exists(l_sExperimentDirectory + std::to_string(experimentCount)))
+			OpenViBE::uint64 l_ui64NumExperiment = 1;
+			while (boost::filesystem::exists(l_sExperimentDirectory + std::to_string(l_ui64NumExperiment)))
 			{
-				experimentCount++;
+				l_ui64NumExperiment++;
 			}
-			experimentCount--;
-			l_sExperimentDirectory += std::to_string(experimentCount);
+			l_ui64NumExperiment--;
+			l_sExperimentDirectory += std::to_string(l_ui64NumExperiment);
 
-			// Load all files inside directory
-			path p(l_sExperimentDirectory);
-			directory_iterator end_itr;
+			m_vDataset1 = loadDataset(l_sExperimentDirectory + "/1");
+			m_vDataset2 = loadDataset(l_sExperimentDirectory + "/2");
 
-			for (directory_iterator itr(p); itr != end_itr; ++itr)
+			if (m_vDataset1 == nullptr || m_vDataset2 == nullptr)
 			{
-				if (is_regular_file(itr->path()))
-				{
-					CString filename(itr->path().string().c_str());
-					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
-					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pOriginalPicture, m_ui32PictureWidth, m_ui32PictureHeight, GDK_INTERP_BILINEAR);
-					if (l_pOriginalPicture)
-					{
-						m_pOriginalPicture.push_back(std::make_pair(filename, l_pOriginalPicture));
-						m_pScaledPicture.push_back(std::make_pair(filename, l_pScaledPicture));
-					}
-					else
-					{
-						getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_ImportantWarning << "Error couldn't load ressource file : " << filename << "!\n";
-						return false;
-					}
-				}
-			}
-
-			if (m_pOriginalPicture.empty()){
-				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error, no images in directory!";
 				return false;
 			}
 
-			// Sort files according to digits in beginning of filename
-			std::sort(m_pOriginalPicture.begin(), m_pOriginalPicture.end(), filenamesCompare);
-			std::sort(m_pScaledPicture.begin(), m_pScaledPicture.end(), filenamesCompare);
-
-			/* std::cout << "LOADING FILES" << std::endl;
-			for (std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>::const_iterator it = m_pOriginalPicture.begin(); it != m_pOriginalPicture.end(); it++)
+			if (m_vDataset1->size() != m_vDataset2->size())
 			{
-				std::cout << it->first.toASCIIString() << std::endl;
-			} */
+				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error, dataset 1 and 2 differ in number of images!";
+				return false;
+			}
 
 			///////////////////////////////////////////////////////
 			m_pMainWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 			if (!m_pMainWindow)
 			{
-				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_ImportantWarning << "Couldn't create window!";
+				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Couldn't create window!";
 				return false;
 			}
 			gtk_window_set_title(GTK_WINDOW(m_pMainWindow), "N400 Experiment");
@@ -178,7 +154,7 @@ namespace OpenViBEPlugins
 		OpenViBE::boolean CN400Experiment::uninitialize()
 		{
 
-			//destroy drawing area
+			//destroy main window
 			if(m_pMainWindow)
 			{
 				gtk_widget_destroy(m_pMainWindow);
@@ -186,18 +162,23 @@ namespace OpenViBEPlugins
 			}
 
 			// unref all pictures
-			for (uint32 i = 0; i < m_pOriginalPicture.size(); i++) {
-				if (m_pOriginalPicture[i].second)
+			for (uint32 i = 0; i < m_vDataset1->size(); i++) {
+				if ((*m_vDataset1)[i].second)
 				{
-					g_object_unref(G_OBJECT(m_pOriginalPicture[i].second));
-					m_pOriginalPicture[i].second = nullptr;
-				}
-				if (m_pScaledPicture[i].second)
-				{
-					g_object_unref(G_OBJECT(m_pScaledPicture[i].second));
-					m_pScaledPicture[i].second = nullptr;
+					g_object_unref(G_OBJECT((*m_vDataset1)[i].second));
+					(*m_vDataset1)[i].second = nullptr;
 				}
 			}
+			delete m_vDataset1;
+
+			for (uint32 i = 0; i < m_vDataset2->size(); i++) {
+				if ((*m_vDataset2)[i].second)
+				{
+					g_object_unref(G_OBJECT((*m_vDataset2)[i].second));
+					(*m_vDataset2)[i].second = nullptr;
+				}
+			}
+			delete m_vDataset2;
 
 			m_oEncoder.uninitialize();
 
@@ -219,7 +200,7 @@ namespace OpenViBEPlugins
 			const uint64 l_ui64CurrenTimeMs = (uint64)((l_ui64CurrentTime >> 16) / 65.5360);
 
 			if (m_bNewIteration) {
-				if (m_ui32RequestedPictureID == m_pOriginalPicture.size())
+				if (m_ui32RequestedPictureID == m_vDataset1->size())
 				{
 					// experiment stopped
 					sendStimulation(OVTK_StimulationId_ExperimentStop, m_ui64PreviousActivationTime, l_ui64CurrentTime);
@@ -288,6 +269,42 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
+		std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* CN400Experiment::loadDataset(std::string experimentDirectory)
+		{
+			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* dataset = new std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>();
+			path p(experimentDirectory);
+			directory_iterator end_itr;
+
+			for (directory_iterator itr(p); itr != end_itr; ++itr)
+			{
+				if (is_regular_file(itr->path()))
+				{
+					CString filename(itr->path().string().c_str());
+					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
+					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pOriginalPicture, m_ui32PictureWidth, m_ui32PictureHeight, GDK_INTERP_BILINEAR);
+					if (l_pOriginalPicture)
+					{
+						dataset->push_back(std::make_pair(filename, l_pScaledPicture));
+					}
+					else
+					{
+						getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error couldn't load ressource file : " << filename << "!\n";
+						return nullptr;
+					}
+				}
+			}
+
+			if (dataset->empty()){
+				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error, no images in directory!";
+				return nullptr;
+			}
+
+			// Sort files according to digits in beginning of filename
+			std::sort(dataset->begin(), dataset->end(), filenamesCompare);
+
+			return dataset;
+		}
+
 		void CN400Experiment::sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
 		{
 			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
@@ -328,9 +345,10 @@ namespace OpenViBEPlugins
 		 * */
 		void CN400Experiment::processKey(guint uiKey)
 		{
-			if (uiKey == 49 || uiKey == 50) // 49 = 1, 50 = 2
+			if (uiKey == 49 || uiKey == 50) // 49 = keycode of NUM1, 50 = NUM2
 			{
 				m_bExperimentStarted = true;
+				m_bDataset1Chosen = (uiKey == 49);
 				gtk_window_set_decorated(GTK_WINDOW(m_pMainWindow), false);
 				gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
 			}
@@ -361,9 +379,10 @@ namespace OpenViBEPlugins
 		{
 			gint l_iWindowWidth = m_pMainWindow->allocation.width;
 			gint l_iWindowHeight = m_pMainWindow->allocation.height;
+			GdkPixbuf* image = m_bDataset1Chosen ? (*m_vDataset1)[uint32CueID].second : (*m_vDataset2)[uint32CueID].second;
 			gdk_draw_pixbuf(m_pMainWindow->window,
 							NULL,
-							m_pScaledPicture[uint32CueID].second,
+							image,
 							0,
 							0,
 							(l_iWindowWidth - m_ui32PictureWidth) / 2,
