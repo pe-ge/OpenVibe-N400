@@ -139,6 +139,15 @@ namespace OpenViBEPlugins
 			gtk_window_set_title(GTK_WINDOW(m_pMainWindow), "N400 Experiment");
 			gtk_widget_set_usize(m_pMainWindow, 600, 600);
 			gtk_window_set_gravity(GTK_WINDOW(m_pMainWindow), GDK_GRAVITY_CENTER);
+
+			// set background color
+			GdkColor u_oBackgroundColor;
+			u_oBackgroundColor.pixel = 0;
+			u_oBackgroundColor.red = 0xFFFF;
+			u_oBackgroundColor.green = 0xFFFF;
+			u_oBackgroundColor.blue = 0xFFFF;
+			gtk_widget_modify_bg(m_pMainWindow, GTK_STATE_NORMAL, &u_oBackgroundColor);
+
 			gtk_widget_show(m_pMainWindow);
 			g_signal_connect(m_pMainWindow, "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
 
