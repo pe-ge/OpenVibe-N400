@@ -43,11 +43,7 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
 			virtual OpenViBE::boolean process(void) { return true; }
 
-			// stimulation-related methods
 			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
-			virtual void sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
-			virtual void sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
-			virtual void sendBeep(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 
 			// callback methods
 			virtual void redraw(void);
@@ -65,14 +61,14 @@ namespace OpenViBEPlugins
 			OpenViBEToolkit::TStimulationEncoder<CN400Experiment> m_oEncoder;
 
 			// Box settings
-			OpenViBE::uint64 m_ui64CrossDuration;
-			OpenViBE::uint64 m_ui64PictureDuration;
-			OpenViBE::uint64 m_ui64PauseDuration;
+			OpenViBE::uint32	m_ui32PictureWidth;
+			OpenViBE::uint32	m_ui32PictureHeight;
 
-			// The Builder handler used to create the interface
-			::GtkBuilder* m_pBuilderInterface;
-			::GtkWidget*  m_pMainWindow;
-			::GtkWidget*  m_pDrawingArea;
+			OpenViBE::uint64	m_ui64CrossDuration;
+			OpenViBE::uint64	m_ui64PictureDuration;
+			OpenViBE::uint64	m_ui64PauseDuration;
+
+			::GtkWidget*		m_pMainWindow;
 
 			OpenViBE::uint32	m_ui32RequestedPictureID;
 			OpenViBE::boolean	m_bRequestDraw;
@@ -81,9 +77,6 @@ namespace OpenViBEPlugins
 
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pOriginalPicture;
 			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_pScaledPicture;
-
-			::GdkColor m_oBackgroundColor;
-			::GdkColor m_oForegroundColor;
 
 			OpenViBE::uint64	m_ui64PreviousActivationTime;
 			OpenViBE::uint64	m_ui64NewIterationTime;
@@ -128,8 +121,8 @@ namespace OpenViBEPlugins
 
 			virtual OpenViBE::boolean getBoxPrototype(OpenViBE::Kernel::IBoxProto& rPrototype) const
 			{
-				rPrototype.addSetting("Window width", OV_TypeId_Integer, "600");
-				rPrototype.addSetting("Window height", OV_TypeId_Integer, "600");
+				rPrototype.addSetting("Picture width", OV_TypeId_Integer, "600");
+				rPrototype.addSetting("Picture height", OV_TypeId_Integer, "600");
 				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "200");
 				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
 				rPrototype.addSetting("Pause duration in ms", OV_TypeId_Integer, "2000");

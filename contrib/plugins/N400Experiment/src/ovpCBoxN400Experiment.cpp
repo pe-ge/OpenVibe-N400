@@ -22,7 +22,7 @@ namespace OpenViBEPlugins
 		// Called when a key is pressed on the keyboard
 		gboolean N400Experiment_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
 		{
-			//std::cout << "registering key callback" << std::endl;
+			// std::cout << thisEvent->keyval << std::endl;
 			reinterpret_cast<CN400Experiment*>(data)->processKey(thisEvent->keyval);
 			return true;
 		}
@@ -45,9 +45,7 @@ namespace OpenViBEPlugins
 			m_ui64CrossDuration(0),
 			m_ui64PictureDuration(0),
 			m_ui64PauseDuration(0),
-			m_pBuilderInterface(NULL),
 			m_pMainWindow(NULL),
-			m_pDrawingArea(NULL),
 			m_ui32RequestedPictureID(1),
 			m_bRequestDraw(false),
 			m_bNewIteration(true),
@@ -62,25 +60,15 @@ namespace OpenViBEPlugins
 			m_bRequestProcessButton(false),
 			m_bRequestBeep(false),
 			m_bExperimentStarted(false)
-		{
-			m_oBackgroundColor.pixel = 0;
-			m_oBackgroundColor.red = 0xFFFF;
-			m_oBackgroundColor.green = 0xFFFF;
-			m_oBackgroundColor.blue = 0xFFFF;
-
-			m_oForegroundColor.pixel = 0;
-			m_oForegroundColor.red = 0xFFFF;
-			m_oForegroundColor.green = 0xFFFF;
-			m_oForegroundColor.blue = 0xFFFF;
-		}
+		{}
 
 		OpenViBE::boolean CN400Experiment::initialize()
 		{
 			//>>>> Reading Settings:
 
 			// Window size
-			OpenViBE::uint32 l_ui32WindowWidth		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 0);
-			OpenViBE::uint32 l_ui32WindowHeight		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
+			m_ui32PictureWidth		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 0);
+			m_ui32PictureHeight		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 1);
 
 			// Durations
 			m_ui64CrossDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
@@ -112,7 +100,7 @@ namespace OpenViBEPlugins
 				{
 					CString filename(itr->path().string().c_str());
 					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
-					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pOriginalPicture, l_ui32WindowWidth, l_ui32WindowHeight, GDK_INTERP_BILINEAR);
+					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pOriginalPicture, m_ui32PictureWidth, m_ui32PictureHeight, GDK_INTERP_BILINEAR);
 					if (l_pOriginalPicture)
 					{
 						m_pOriginalPicture.push_back(std::make_pair(filename, l_pOriginalPicture));
@@ -141,33 +129,18 @@ namespace OpenViBEPlugins
 				std::cout << it->first.toASCIIString() << std::endl;
 			} */
 
-			//load the gtk builder interface
-			m_pBuilderInterface=gtk_builder_new();
-			gtk_builder_add_from_file(m_pBuilderInterface, OpenViBE::Directories::getDataDir() + "/../../../contrib/plugins/N400Experiment/N400.ui", NULL);
-		
-			if(!m_pBuilderInterface)
+			///////////////////////////////////////////////////////
+			m_pMainWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+			if (!m_pMainWindow)
 			{
-				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_ImportantWarning << "Couldn't load the interface !";
+				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_ImportantWarning << "Couldn't create window!";
 				return false;
 			}
-
-			gtk_builder_connect_signals(m_pBuilderInterface, NULL);
-
-			m_pDrawingArea = GTK_WIDGET(gtk_builder_get_object(m_pBuilderInterface, "N400DrawingArea"));
-			gtk_widget_set_size_request(m_pDrawingArea, l_ui32WindowWidth, l_ui32WindowHeight);
-
-			g_signal_connect(G_OBJECT(m_pDrawingArea), "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
-
-			//set widget bg color
-			gtk_widget_modify_bg(m_pDrawingArea, GTK_STATE_NORMAL, &m_oBackgroundColor);
-			gtk_widget_modify_bg(m_pDrawingArea, GTK_STATE_PRELIGHT, &m_oBackgroundColor);
-			gtk_widget_modify_bg(m_pDrawingArea, GTK_STATE_ACTIVE, &m_oBackgroundColor);
-
-			gtk_widget_modify_fg(m_pDrawingArea, GTK_STATE_NORMAL, &m_oForegroundColor);
-			gtk_widget_modify_fg(m_pDrawingArea, GTK_STATE_PRELIGHT, &m_oForegroundColor);
-			gtk_widget_modify_fg(m_pDrawingArea, GTK_STATE_ACTIVE, &m_oForegroundColor);
-
-			getBoxAlgorithmContext()->getVisualisationContext()->setWidget(m_pDrawingArea);
+			gtk_window_set_title(GTK_WINDOW(m_pMainWindow), "N400 Experiment");
+			gtk_widget_set_usize(m_pMainWindow, 600, 600);
+			gtk_window_set_gravity(GTK_WINDOW(m_pMainWindow), GDK_GRAVITY_CENTER);
+			gtk_widget_show(m_pMainWindow);
+			g_signal_connect(m_pMainWindow, "key-press-event", G_CALLBACK(N400Experiment_KeyPressCallback), this);
 
 			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("Enter", 65293));
 			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("+", 65451));
@@ -197,17 +170,10 @@ namespace OpenViBEPlugins
 		{
 
 			//destroy drawing area
-			if(m_pDrawingArea)
+			if(m_pMainWindow)
 			{
-				gtk_widget_destroy(m_pDrawingArea);
-				m_pDrawingArea = NULL;
-			}
-
-			// unref the xml file as it's not needed anymore
-			if(m_pBuilderInterface) 
-			{
-				g_object_unref(G_OBJECT(m_pBuilderInterface));
-				m_pBuilderInterface=NULL;
+				gtk_widget_destroy(m_pMainWindow);
+				m_pMainWindow = NULL;
 			}
 
 			// unref all pictures
@@ -244,6 +210,12 @@ namespace OpenViBEPlugins
 			const uint64 l_ui64CurrenTimeMs = (uint64)((l_ui64CurrentTime >> 16) / 65.5360);
 
 			if (m_bNewIteration) {
+				if (m_ui32RequestedPictureID == m_pOriginalPicture.size())
+				{
+					// experiment stopped
+					sendStimulation(OVTK_StimulationId_ExperimentStop, m_ui64PreviousActivationTime, l_ui64CurrentTime);
+					return true;
+				}
 				m_eCurrentCue = CROSS;
 				m_bRequestDraw = true;
 				m_bNewIteration = false;
@@ -282,16 +254,15 @@ namespace OpenViBEPlugins
 			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
 			l_pStimulationSet->clear();
 			
-			if (m_bRequestDraw && GTK_WIDGET(m_pDrawingArea)->window)
+			if (m_bRequestDraw)
 			{
-				//gdk_window_invalidate_rect(GTK_WIDGET(m_pDrawingArea)->window,NULL,true);
 				redraw();
-				sendCurrentCue(m_ui64PreviousActivationTime, l_ui64CurrentTime);
+				sendStimulation(m_eCurrentCue, m_ui64PreviousActivationTime, l_ui64CurrentTime);
 			}
 
 			if (m_bRequestProcessButton)
 			{
-				sendPressedButton(m_ui64PreviousActivationTime, l_ui64CurrentTime);
+				sendStimulation(m_ui32PressedButton, m_ui64PreviousActivationTime, l_ui64CurrentTime);
 				m_bProcessingKeys = false;
 				m_bRequestProcessButton = false;
 				m_bNewIteration = true;
@@ -299,7 +270,7 @@ namespace OpenViBEPlugins
 
 			if (m_bRequestBeep)
 			{
-				sendBeep(m_ui64PreviousActivationTime, l_ui64CurrentTime);
+				sendStimulation(OVTK_StimulationId_Beep, m_ui64PreviousActivationTime, l_ui64CurrentTime);
 				m_bRequestBeep = false;
 			}
 
@@ -318,21 +289,6 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 		}
 
-		void CN400Experiment::sendCurrentCue(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
-		{
-			sendStimulation(m_eCurrentCue, ui64PreviousTime, ui64CurrentTime);
-		}
-
-		void CN400Experiment::sendPressedButton(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
-		{
-			sendStimulation(m_ui32PressedButton, ui64PreviousTime, ui64CurrentTime);
-		}
-
-		void CN400Experiment::sendBeep(OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
-		{
-			sendStimulation(OVTK_StimulationId_Beep, ui64PreviousTime, ui64CurrentTime);
-		}
-
 		// Callbacks
 
 		void CN400Experiment::redraw()
@@ -347,11 +303,10 @@ namespace OpenViBEPlugins
 				case PICTURE1:
 				case PICTURE2:
 					drawPicture(m_ui32RequestedPictureID++);
-					if (m_ui32RequestedPictureID == m_pOriginalPicture.size()) m_ui32RequestedPictureID = 1;
 					break;
 				case PAUSE1:
 				case PAUSE2:
-					gdk_window_clear(m_pDrawingArea->window);
+					gdk_window_clear(m_pMainWindow->window);
 					break;
 			}
 			m_eCurrentCue = N400Cue((m_eCurrentCue + 1) % TOTAL_CUES);
@@ -364,7 +319,12 @@ namespace OpenViBEPlugins
 		 * */
 		void CN400Experiment::processKey(guint uiKey)
 		{
-			if (uiKey == 32) m_bExperimentStarted = true; // 32 = spacebar
+			if (uiKey == 49 || uiKey == 50) // 49 = 1, 50 = 2
+			{
+				m_bExperimentStarted = true;
+				gtk_window_set_decorated(GTK_WINDOW(m_pMainWindow), false);
+				gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
+			}
 
 			if (!m_bProcessingKeys) return;
 
@@ -390,9 +350,20 @@ namespace OpenViBEPlugins
 
 		void CN400Experiment::drawPicture(OpenViBE::uint32 uint32CueID)
 		{
-			gint l_iWindowWidth = m_pDrawingArea->allocation.width;
-			gint l_iWindowHeight = m_pDrawingArea->allocation.height;
-			gdk_draw_pixbuf(m_pDrawingArea->window, NULL, m_pScaledPicture[uint32CueID].second, 0, 0, 0, 0, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
+			gint l_iWindowWidth = m_pMainWindow->allocation.width;
+			gint l_iWindowHeight = m_pMainWindow->allocation.height;
+			gdk_draw_pixbuf(m_pMainWindow->window,
+							NULL,
+							m_pScaledPicture[uint32CueID].second,
+							0,
+							0,
+							(l_iWindowWidth - m_ui32PictureWidth) / 2,
+							(l_iWindowHeight - m_ui32PictureHeight) / 2,
+							-1,
+							-1,
+							GDK_RGB_DITHER_NONE,
+							0, 
+							0);
 		}
 	};
 };
