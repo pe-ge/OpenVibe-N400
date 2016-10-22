@@ -162,23 +162,8 @@ namespace OpenViBEPlugins
 			}
 
 			// unref all pictures
-			for (uint32 i = 0; i < m_vDataset1->size(); i++) {
-				if ((*m_vDataset1)[i].second)
-				{
-					g_object_unref(G_OBJECT((*m_vDataset1)[i].second));
-					(*m_vDataset1)[i].second = nullptr;
-				}
-			}
-			delete m_vDataset1;
-
-			for (uint32 i = 0; i < m_vDataset2->size(); i++) {
-				if ((*m_vDataset2)[i].second)
-				{
-					g_object_unref(G_OBJECT((*m_vDataset2)[i].second));
-					(*m_vDataset2)[i].second = nullptr;
-				}
-			}
-			delete m_vDataset2;
+			deleteDataset(m_vDataset1);
+			deleteDataset(m_vDataset2);
 
 			m_oEncoder.uninitialize();
 
@@ -303,6 +288,21 @@ namespace OpenViBEPlugins
 			std::sort(dataset->begin(), dataset->end(), filenamesCompare);
 
 			return dataset;
+		}
+
+		void CN400Experiment::deleteDataset(std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* dataset)
+		{
+			if (dataset)
+			{
+				for (uint32 i = 0; i < dataset->size(); i++) {
+					if ((*dataset)[i].second)
+					{
+						g_object_unref(G_OBJECT((*dataset)[i].second));
+						(*dataset)[i].second = nullptr;
+					}
+				}
+				delete dataset;
+			}
 		}
 
 		void CN400Experiment::sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)

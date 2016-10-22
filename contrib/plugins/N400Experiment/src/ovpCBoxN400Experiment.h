@@ -44,6 +44,7 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean process(void) { return true; }
 
 			virtual std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* loadDataset(std::string experimentDirectory);
+			virtual void deleteDataset(std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* dataset);
 			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
 
 			// callback methods
