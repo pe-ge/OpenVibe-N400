@@ -44,9 +44,10 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
 			virtual OpenViBE::boolean process(void) { return true; }
 
-			virtual std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* loadDataset(std::string experimentDirectory);
-			virtual void deleteDataset(std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* dataset);
-			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime);
+			virtual OpenViBE::boolean loadDataset(std::string experimentDirectory, std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& dataset);
+			virtual void deleteDataset(std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& dataset);
+			virtual void createDatasetOfMatches(std::vector<OpenViBE::boolean>& datasetOfMatches, std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& imageDataset);
+			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier);
 
 			// callback methods
 			virtual void redraw(void);
@@ -76,14 +77,17 @@ namespace OpenViBEPlugins
 			::GtkWidget*		m_pMainWindow;
 
 			OpenViBE::uint32	m_ui32RequestedPictureID;
-			OpenViBE::boolean	m_bRequestDraw;
 			OpenViBE::boolean	m_bNewIteration;
 			N400Cue				m_eCurrentCue;
 
-			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* m_vDataset1;
-			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* m_vDataset2;
+			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_vDataset1;
+			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_vDataset2;
 
-			OpenViBE::uint64	m_ui64PreviousActivationTime;
+			std::vector<OpenViBE::boolean>	m_vDatasetOfMatches1;
+			std::vector<OpenViBE::boolean>	m_vDatasetOfMatches2;
+
+			OpenViBE::uint64	m_ui64PreviousTime;
+			OpenViBE::uint64	m_ui64CurrentTime;
 			OpenViBE::uint64	m_ui64NewIterationTime;
 
 			// Buttons

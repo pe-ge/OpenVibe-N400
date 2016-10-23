@@ -27,6 +27,11 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
+		std::string obtainFilename(std::string path)
+		{
+			return path.substr(path.rfind("_") + 1);
+		}
+
 		OpenViBE::boolean filenamesCompare(const std::pair<OpenViBE::CString, ::GdkPixbuf*>& firstElem, std::pair<OpenViBE::CString, ::GdkPixbuf*>& secondElem)
 		{
 			std::string firstPath = firstElem.first.toASCIIString();
@@ -49,10 +54,10 @@ namespace OpenViBEPlugins
 			m_ui64ThirdPauseDuration(0),
 			m_pMainWindow(NULL),
 			m_ui32RequestedPictureID(1),
-			m_bRequestDraw(false),
 			m_bNewIteration(true),
 			m_eCurrentCue(CROSS),
-			m_ui64PreviousActivationTime(0),
+			m_ui64PreviousTime(0),
+			m_ui64CurrentTime(0),
 			m_ui64NewIterationTime(0),
 			m_sRightButton(NULL),
 			m_sWrongButton(NULL),
@@ -95,15 +100,15 @@ namespace OpenViBEPlugins
 			l_ui64NumExperiment--;
 			l_sExperimentDirectory += std::to_string(l_ui64NumExperiment);
 
-			m_vDataset1 = loadDataset(l_sExperimentDirectory + "/1");
-			m_vDataset2 = loadDataset(l_sExperimentDirectory + "/2");
-
-			if (m_vDataset1 == nullptr || m_vDataset2 == nullptr)
+			OpenViBE::boolean result = true;
+			result &= loadDataset(l_sExperimentDirectory + "/1", m_vDataset1);
+			result &= loadDataset(l_sExperimentDirectory + "/2", m_vDataset2);
+			if (!result)
 			{
 				return false;
 			}
 
-			if (m_vDataset1->size() != m_vDataset2->size())
+			if (m_vDataset1.size() != m_vDataset2.size())
 			{
 				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error, dataset 1 and 2 differ in number of images!";
 				return false;
@@ -147,6 +152,10 @@ namespace OpenViBEPlugins
 			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("8", 65464));
 			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("9", 65465));
 
+			// we need to know whether picture and following word match
+			createDatasetOfMatches(m_vDatasetOfMatches1, m_vDataset1);
+			createDatasetOfMatches(m_vDatasetOfMatches2, m_vDataset2);
+
 			// output stimulation
 			m_oEncoder.initialize(*this, 0);
 			m_oEncoder.encodeHeader();
@@ -178,6 +187,12 @@ namespace OpenViBEPlugins
 		{
 			if (!m_bExperimentStarted) return true;
 
+			// clear previous stimulations
+			// do we need this?
+			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
+			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
+			l_pStimulationSet->clear();
+
 			// precomputing time variables
 			const uint64 l_ui64FirstPauseTime = m_ui64CrossDuration;
 			const uint64 l_ui64FirstPictureTime = l_ui64FirstPauseTime + m_ui64FirstPauseDuration;
@@ -186,14 +201,14 @@ namespace OpenViBEPlugins
 			const uint64 l_ui64ThirdPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
 			const uint64 l_ui64AnswerTime = l_ui64ThirdPauseTime + m_ui64ThirdPauseDuration;
 
-			const uint64 l_ui64CurrentTime = rMessageClock.getTime();
-			const uint64 l_ui64CurrenTimeMs = (uint64)((l_ui64CurrentTime >> 16) / 65.5360);
+			const uint64 m_ui64CurrentTime = rMessageClock.getTime();
+			const uint64 l_ui64CurrenTimeMs = (uint64)((m_ui64CurrentTime >> 16) / 65.5360);
 
 			if (m_bNewIteration) {
-				if (m_ui32RequestedPictureID == m_vDataset1->size()) // were all pictures used?
+				if (m_ui32RequestedPictureID == m_vDataset1.size()) // were all pictures used?
 				{
 					// stop experiment
-					sendStimulation(OVTK_StimulationId_ExperimentStop, m_ui64PreviousActivationTime, l_ui64CurrentTime);
+					sendStimulation(OVTK_StimulationId_ExperimentStop);
 					return true;
 				}
 				m_eCurrentCue = CROSS;
@@ -201,56 +216,44 @@ namespace OpenViBEPlugins
 				m_ui64NewIterationTime = l_ui64CurrenTimeMs;
 			}
 
-			if (!m_bRequestDraw) {
-				// Cross
-				if (m_eCurrentCue == CROSS)
-				{
-					m_bRequestDraw = true;
-				}
-				if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPauseTime))
-				{
-					m_bRequestDraw = true;
-				}
-				// First picture
-				if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPictureTime))
-				{
-					m_bRequestDraw = true;
-				}
-				// Second pause
-				else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPauseTime))
-				{
-					m_bRequestDraw = true;
-				}
-				// Second picture
-				else if ((m_eCurrentCue == PICTURE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPictureTime))
-				{
-					m_bRequestDraw = true;
-				}
-				// Third pause
-				else if ((m_eCurrentCue == PAUSE3) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64ThirdPauseTime))
-				{
-					m_bRequestDraw = true;					
-				}
-				// Answer
-				else if ((m_eCurrentCue == ANSWER) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64AnswerTime))
-				{
-					m_bProcessingKeys = true;
-				}
-			}
-
-			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
-			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
-			l_pStimulationSet->clear();
-			
-			if (m_bRequestDraw)
+			// Cross
+			if (m_eCurrentCue == CROSS)
 			{
 				redraw();
-				sendStimulation(m_eCurrentCue, m_ui64PreviousActivationTime, l_ui64CurrentTime);
+			}
+			else if ((m_eCurrentCue == PAUSE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPauseTime))
+			{
+				redraw();
+			}
+			// First picture
+			else if ((m_eCurrentCue == PICTURE1) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64FirstPictureTime))
+			{
+				redraw();
+			}
+			// Second pause
+			else if ((m_eCurrentCue == PAUSE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPauseTime))
+			{
+				redraw();
+			}
+			// Second picture
+			else if ((m_eCurrentCue == PICTURE2) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64SecondPictureTime))
+			{
+				redraw();
+			}
+			// Third pause
+			else if ((m_eCurrentCue == PAUSE3) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64ThirdPauseTime))
+			{
+				redraw();
+			}
+			// Answer
+			else if ((m_eCurrentCue == ANSWER) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64AnswerTime))
+			{
+				m_bProcessingKeys = true;
 			}
 
 			if (m_bRequestProcessButton)
 			{
-				sendStimulation(m_ui32PressedButton, m_ui64PreviousActivationTime, l_ui64CurrentTime);
+				sendStimulation(m_ui32PressedButton);
 				m_bProcessingKeys = false;
 				m_bRequestProcessButton = false;
 				m_bNewIteration = true;
@@ -258,18 +261,17 @@ namespace OpenViBEPlugins
 
 			if (m_bRequestBeep)
 			{
-				sendStimulation(OVTK_StimulationId_Beep, m_ui64PreviousActivationTime, l_ui64CurrentTime);
+				sendStimulation(OVTK_StimulationId_Beep);
 				m_bRequestBeep = false;
 			}
 
-			m_ui64PreviousActivationTime = l_ui64CurrentTime;
+			m_ui64PreviousTime = m_ui64CurrentTime;
 
 			return true;
 		}
 
-		std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* CN400Experiment::loadDataset(std::string experimentDirectory)
+		OpenViBE::boolean CN400Experiment::loadDataset(std::string experimentDirectory, std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& dataset)
 		{
-			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* dataset = new std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>();
 			path p(experimentDirectory);
 			directory_iterator end_itr;
 
@@ -282,49 +284,58 @@ namespace OpenViBEPlugins
 					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pOriginalPicture, m_ui32PictureWidth, m_ui32PictureHeight, GDK_INTERP_BILINEAR);
 					if (l_pOriginalPicture)
 					{
-						dataset->push_back(std::make_pair(filename, l_pScaledPicture));
+						dataset.push_back(std::make_pair(filename, l_pScaledPicture));
 					}
 					else
 					{
 						getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error couldn't load ressource file : " << filename << "!\n";
-						return nullptr;
+						return false;
 					}
 				}
 			}
 
-			if (dataset->empty()){
+			if (dataset.empty()){
 				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error, no images in directory!";
-				return nullptr;
+				return false;
 			}
 
 			// Sort files according to digits in beginning of filename
-			std::sort(dataset->begin(), dataset->end(), filenamesCompare);
-
-			return dataset;
+			std::sort(dataset.begin(), dataset.end(), filenamesCompare);
+			return true;
 		}
 
-		void CN400Experiment::deleteDataset(std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>* dataset)
+		void CN400Experiment::deleteDataset(std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& dataset)
 		{
-			if (dataset)
-			{
-				for (uint32 i = 0; i < dataset->size(); i++) {
-					if ((*dataset)[i].second)
-					{
-						g_object_unref(G_OBJECT((*dataset)[i].second));
-						(*dataset)[i].second = nullptr;
-					}
+			for (uint32 i = 0; i < dataset.size(); i++) {
+				if (dataset[i].second)
+				{
+					g_object_unref(G_OBJECT(dataset[i].second));
+					dataset[i].second = nullptr;
 				}
-				delete dataset;
 			}
 		}
 
-		void CN400Experiment::sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier, OpenViBE::uint64 ui64PreviousTime, OpenViBE::uint64 ui64CurrentTime)
+		void CN400Experiment::createDatasetOfMatches(std::vector<OpenViBE::boolean>& datasetOfMatches, std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& imageDataset)
+		{
+			datasetOfMatches.push_back(true); // first one is cross which we dont care about
+			for (uint32 i = 1; i < imageDataset.size(); i+= 2)
+			{
+				std::string filenamePicture = obtainFilename(imageDataset[i].first.toASCIIString());
+				std::string filenameWord = obtainFilename(imageDataset[i+1].first.toASCIIString());
+
+				OpenViBE::boolean match = filenamePicture[0] == filenameWord[0];
+				datasetOfMatches.push_back(match); // for picture
+				datasetOfMatches.push_back(match); // for word
+			}
+		}
+
+		void CN400Experiment::sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier)
 		{
 			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
 			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
-			l_pStimulationSet->appendStimulation(ui64StimulationIdentifier, ui64CurrentTime, 0);
+			l_pStimulationSet->appendStimulation(ui64StimulationIdentifier, m_ui64CurrentTime, 0);
 			m_oEncoder.encodeBuffer();
-			l_pBoxIO->markOutputAsReadyToSend(0, ui64PreviousTime, ui64CurrentTime);
+			l_pBoxIO->markOutputAsReadyToSend(0, m_ui64PreviousTime, m_ui64CurrentTime);
 			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 		}
 
@@ -332,25 +343,43 @@ namespace OpenViBEPlugins
 
 		void CN400Experiment::redraw()
 		{
-			if (!m_bRequestDraw) return;
+			std::vector<OpenViBE::boolean>& l_vChosenDatasetOfMatches = m_bDataset1Chosen ? m_vDatasetOfMatches1 : m_vDatasetOfMatches2;
+			uint32 l_ui32Match = 100;
+			if (m_ui32RequestedPictureID < l_vChosenDatasetOfMatches.size())
+			{
+				l_ui32Match = l_vChosenDatasetOfMatches[m_ui32RequestedPictureID] ? 200 : 300;
+			}
 
 			switch (m_eCurrentCue)
 			{
 				case CROSS:
+					sendStimulation(0);
 					drawPicture(0);
 					break;
 				case PICTURE1:
+					sendStimulation(l_ui32Match + 1);
+					drawPicture(m_ui32RequestedPictureID);
+					m_ui32RequestedPictureID++;
+					break;
 				case PICTURE2:
-					drawPicture(m_ui32RequestedPictureID++);
+					sendStimulation(l_ui32Match + 3);
+					drawPicture(m_ui32RequestedPictureID);
+					m_ui32RequestedPictureID++;
 					break;
 				case PAUSE1:
+					sendStimulation(1);
+					gdk_window_clear(m_pMainWindow->window);
+					break;
 				case PAUSE2:
+					sendStimulation(l_ui32Match + 2);
+					gdk_window_clear(m_pMainWindow->window);
+					break;
 				case PAUSE3:
+					sendStimulation(4);
 					gdk_window_clear(m_pMainWindow->window);
 					break;
 			}
 			m_eCurrentCue = N400Cue((m_eCurrentCue + 1) % TOTAL_CUES);
-			m_bRequestDraw = false;
 		}
 
 		/**
@@ -359,7 +388,7 @@ namespace OpenViBEPlugins
 		 * */
 		void CN400Experiment::processKey(guint uiKey)
 		{
-			if (uiKey == 49 || uiKey == 50) // 49 = keycode of NUM1, 50 = NUM2
+			if (!m_bExperimentStarted && (uiKey == 49 || uiKey == 50)) // 49 = keycode of NUM1, 50 = NUM2
 			{
 				m_bExperimentStarted = true;
 				m_bDataset1Chosen = (uiKey == 49);
@@ -391,21 +420,10 @@ namespace OpenViBEPlugins
 
 		void CN400Experiment::drawPicture(OpenViBE::uint32 uint32CueID)
 		{
-			gint l_iWindowWidth = m_pMainWindow->allocation.width;
-			gint l_iWindowHeight = m_pMainWindow->allocation.height;
-			GdkPixbuf* image = m_bDataset1Chosen ? (*m_vDataset1)[uint32CueID].second : (*m_vDataset2)[uint32CueID].second;
-			gdk_draw_pixbuf(m_pMainWindow->window,
-							NULL,
-							image,
-							0,
-							0,
-							(l_iWindowWidth - m_ui32PictureWidth) / 2,
-							(l_iWindowHeight - m_ui32PictureHeight) / 2,
-							-1,
-							-1,
-							GDK_RGB_DITHER_NONE,
-							0, 
-							0);
+			gint l_iImagePosX = (m_pMainWindow->allocation.width - m_ui32PictureWidth) / 2;
+			gint l_iImagePosY = (m_pMainWindow->allocation.height - m_ui32PictureHeight) / 2;
+			GdkPixbuf* image = m_bDataset1Chosen ? m_vDataset1[uint32CueID].second : m_vDataset2[uint32CueID].second;
+			gdk_draw_pixbuf(m_pMainWindow->window, NULL, image, 0, 0, l_iImagePosX, l_iImagePosY, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
 		}
 	};
 };
