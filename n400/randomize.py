@@ -4,6 +4,8 @@ import os
 import random
 from PIL import Image, ImageDraw, ImageFont
 
+N = 100  # number of pairs
+
 
 def create_random_dict(max_items):
     def equals(rand_keys, rand_values):
@@ -22,48 +24,45 @@ def create_random_dict(max_items):
 
     return dict(zip(rand_keys, rand_values))
 
-if __name__ == '__main__':
-    src_dir = os.curdir
-    dest_dir_name = 'experiment'
-    filenames = []
 
-    # iterate recursively over images inside dataset/
-    for filename in glob.iglob('dataset/**/*.*', recursive=True):
-        filenames.append(filename)
+def load_dataset():
+    return [filename for filename in glob.iglob('dataset/**/*.*', recursive=True)]
 
-    # text image params
-    W, H = (600, 600)
-    font = ImageFont.truetype("verdana.ttf", 50)
 
-    # create new folder (check whether old one exists)
+def create_experiment_directories(src_dir, dest_dir_name):
     count = 1
     dest_dir = os.path.join(src_dir, dest_dir_name + str(count))
     while os.path.exists(dest_dir):
         count += 1
         dest_dir = os.path.join(src_dir, dest_dir_name + str(count))
-    os.makedirs(dest_dir)
 
-    # draw cross into first image
+    dest_dir1 = os.path.join(dest_dir, "1")
+    dest_dir2 = os.path.join(dest_dir, "2")
+    os.makedirs(dest_dir1)
+    os.makedirs(dest_dir2)
+    return dest_dir1, dest_dir2
+
+
+def save_cross(W, H, filename, dest_dir):
     image = Image.new("RGBA", (W, H))
     draw = ImageDraw.Draw(image)
     border = 100
     draw.line([W/2, border, W/2, H - border],  fill="black", width=10)
     draw.line([border, H/2, W - border, H/2],  fill="black", width=10)
-    image.save(os.path.join(dest_dir, "000_cross.png"), "PNG")
+    image.save(os.path.join(dest_dir, filename), "PNG")
 
-    # shuffle filenames
-    random.shuffle(filenames)
 
+def process_dataset(dataset, dest_dir):
+    save_cross(W, H, "000_cross.png", dest_dir)
     # append idxs in ascending order to filenames
     new_filenames = {}
-    for idx, filename in enumerate(filenames):
+    for idx, filename in enumerate(dataset):
         directory, img_name = os.path.split(filename)
         new_img_name = '{:03}_{}'.format(2 * idx + 1, img_name)
         new_filename = os.path.join(dest_dir, new_img_name)
         new_filenames[filename] = new_filename
 
     filenames_map = create_random_dict(len(new_filenames))
-
     # copy files to new folder
     for old_filename, new_filename in new_filenames.items():
         # copy
@@ -81,11 +80,11 @@ if __name__ == '__main__':
 
         # prepare text
         text = os.path.split(old_filename)[1].split('.')[0]  # remove extension
-        text = text.capitalize()
+        text = text.lower()
         text = text.replace('_', ' ')
 
         w, h = font.getsize(text)
-        draw.text(((W-w)/2, (H-h)/2), text.capitalize(), fill="black", font=font)
+        draw.text(((W-w)/2, (H-h)/2), text, fill="black", font=font)
 
         new_filename = os.path.split(new_filename)[1].split('_')
         prefix = int(new_filename[0]) + 1
@@ -97,7 +96,25 @@ if __name__ == '__main__':
         dest_file = os.path.join(dest_dir, new_filename)
         image.save(dest_file, "PNG")
 
+if __name__ == '__main__':
+    src_dir = os.curdir
+    dest_dir_name = 'experiment'
+    W, H = (600, 600)
+    font = ImageFont.truetype("verdana.ttf", 50)
+
+    full_dataset = load_dataset()
+    random.shuffle(full_dataset)
+    dataset1 = full_dataset[0:N]
+    dataset2 = full_dataset[N:2*N]
+
+    dest_dir1, dest_dir2 = create_experiment_directories(src_dir, dest_dir_name)
+
+    process_dataset(dataset1, dest_dir1)
+    process_dataset(dataset2, dest_dir2)
+
     # save file order to txt
-    with open(dest_dir + '.txt', 'w') as f:
-        for filename in sorted(glob.glob(os.path.join(dest_dir, '*.*'))):
-            f.write('{}\n'.format(os.path.split(filename)[-1]))
+    with open(os.path.split(dest_dir1)[0] + '.txt', 'w') as f:
+        for filename in sorted(glob.glob(os.path.join(dest_dir1, '*.*'))):
+            f.write('{}\n'.format(filename))
+        for filename in sorted(glob.glob(os.path.join(dest_dir2, '*.*'))):
+            f.write('{}\n'.format(filename))
