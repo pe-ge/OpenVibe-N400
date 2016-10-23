@@ -282,15 +282,12 @@ namespace OpenViBEPlugins
 					CString filename(itr->path().string().c_str());
 					::GdkPixbuf* l_pOriginalPicture = gdk_pixbuf_new_from_file_at_size(filename, -1, -1, NULL);
 					::GdkPixbuf* l_pScaledPicture = gdk_pixbuf_scale_simple(l_pOriginalPicture, m_ui32PictureWidth, m_ui32PictureHeight, GDK_INTERP_BILINEAR);
-					if (l_pOriginalPicture)
-					{
-						dataset.push_back(std::make_pair(filename, l_pScaledPicture));
-					}
-					else
+					if (!l_pScaledPicture)
 					{
 						getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error couldn't load ressource file : " << filename << "!\n";
 						return false;
 					}
+					dataset.push_back(std::make_pair(filename, l_pScaledPicture));
 				}
 			}
 
