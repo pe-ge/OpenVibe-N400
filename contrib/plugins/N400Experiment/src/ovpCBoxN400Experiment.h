@@ -100,7 +100,6 @@ namespace OpenViBEPlugins
 			OpenViBE::boolean	m_bRequestBeep;
 
 			OpenViBE::boolean	m_bExperimentStarted;
-			OpenViBE::boolean	m_bDataset1Chosen;
 		};
 
 		/**

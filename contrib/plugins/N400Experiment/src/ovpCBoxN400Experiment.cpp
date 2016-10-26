@@ -366,10 +366,9 @@ namespace OpenViBEPlugins
 		 * */
 		void CN400Experiment::processKey(guint uiKey)
 		{
-			if (!m_bExperimentStarted && (uiKey == 49 || uiKey == 50)) // 49 = keycode of NUM1, 50 = NUM2
+			if (!m_bExperimentStarted && (uiKey == 32)) // 32 = keycode of Spacebar
 			{
 				m_bExperimentStarted = true;
-				m_bDataset1Chosen = (uiKey == 49);
 				gtk_window_set_decorated(GTK_WINDOW(m_pMainWindow), false);
 				gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
 			}
