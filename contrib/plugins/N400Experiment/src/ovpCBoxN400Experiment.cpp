@@ -201,7 +201,7 @@ namespace OpenViBEPlugins
 			const uint64 l_ui64ThirdPauseTime = l_ui64SecondPictureTime + m_ui64PictureDuration;
 			const uint64 l_ui64AnswerTime = l_ui64ThirdPauseTime + m_ui64ThirdPauseDuration;
 
-			const uint64 m_ui64CurrentTime = rMessageClock.getTime();
+			m_ui64CurrentTime = rMessageClock.getTime();
 			const uint64 l_ui64CurrenTimeMs = (uint64)((m_ui64CurrentTime >> 16) / 65.5360);
 
 			if (m_bNewIteration) {
@@ -266,7 +266,7 @@ namespace OpenViBEPlugins
 			}
 
 			m_ui64PreviousTime = m_ui64CurrentTime;
-
+            getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 			return true;
 		}
 
@@ -287,6 +287,8 @@ namespace OpenViBEPlugins
 						getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error couldn't load ressource file : " << filename << "!\n";
 						return false;
 					}
+                    g_object_unref(G_OBJECT(l_pOriginalPicture));
+                    l_pOriginalPicture = nullptr;
 					dataset.push_back(std::make_pair(filename, l_pScaledPicture));
 				}
 			}
@@ -333,7 +335,6 @@ namespace OpenViBEPlugins
 			l_pStimulationSet->appendStimulation(ui64StimulationIdentifier, m_ui64CurrentTime, 0);
 			m_oEncoder.encodeBuffer();
 			l_pBoxIO->markOutputAsReadyToSend(0, m_ui64PreviousTime, m_ui64CurrentTime);
-			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 		}
 
 		// Callbacks
