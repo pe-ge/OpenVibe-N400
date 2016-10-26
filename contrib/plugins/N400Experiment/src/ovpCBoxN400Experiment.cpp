@@ -90,31 +90,22 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(8, m_sWrongButton);
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(9, m_sUnsureButton);
 
+			// Experiment directory and iteration
+			OpenViBE::CString l_sExperimentDirectory;
+			OpenViBE::CString l_sExperimentIteration;
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(10, l_sExperimentDirectory);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(11, l_sExperimentIteration);
+
 			// Get experiment directory
-			std::string l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/experiment";
-			OpenViBE::uint64 l_ui64NumExperiment = 1;
-			while (boost::filesystem::exists(l_sExperimentDirectory + std::to_string(l_ui64NumExperiment)))
-			{
-				l_ui64NumExperiment++;
-			}
-			l_ui64NumExperiment--;
-			l_sExperimentDirectory += std::to_string(l_ui64NumExperiment);
+			l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/" + l_sExperimentDirectory + "/" + l_sExperimentIteration;
 
-			OpenViBE::boolean result = true;
-			result &= loadDataset(l_sExperimentDirectory + "/1", m_vDataset1);
-			result &= loadDataset(l_sExperimentDirectory + "/2", m_vDataset2);
-			if (!result)
+			if (!loadDataset(l_sExperimentDirectory + "/1"))
 			{
 				return false;
 			}
+			// we need to know whether picture and following word match
+			createMatches();
 
-			if (m_vDataset1.size() != m_vDataset2.size())
-			{
-				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error, dataset 1 and 2 differ in number of images!";
-				return false;
-			}
-
-			///////////////////////////////////////////////////////
 			m_pMainWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 			if (!m_pMainWindow)
 			{
@@ -125,7 +116,7 @@ namespace OpenViBEPlugins
 			gtk_widget_set_usize(m_pMainWindow, 600, 600);
 			gtk_window_set_gravity(GTK_WINDOW(m_pMainWindow), GDK_GRAVITY_CENTER);
 
-			// set background color
+			// set background color of main window
 			GdkColor u_oBackgroundColor;
 			u_oBackgroundColor.pixel = 0;
 			u_oBackgroundColor.red = 0xFFFF;
@@ -152,10 +143,6 @@ namespace OpenViBEPlugins
 			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("8", 65464));
 			m_mButtonCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("9", 65465));
 
-			// we need to know whether picture and following word match
-			createDatasetOfMatches(m_vDatasetOfMatches1, m_vDataset1);
-			createDatasetOfMatches(m_vDatasetOfMatches2, m_vDataset2);
-
 			// output stimulation
 			m_oEncoder.initialize(*this, 0);
 			m_oEncoder.encodeHeader();
@@ -175,8 +162,13 @@ namespace OpenViBEPlugins
 			}
 
 			// unref all pictures
-			deleteDataset(m_vDataset1);
-			deleteDataset(m_vDataset2);
+			for (uint32 i = 0; i < m_vImagesDataset.size(); i++) {
+				if (m_vImagesDataset[i].second)
+				{
+					g_object_unref(G_OBJECT(m_vImagesDataset[i].second));
+					m_vImagesDataset[i].second = nullptr;
+				}
+			}
 
 			m_oEncoder.uninitialize();
 
@@ -205,7 +197,7 @@ namespace OpenViBEPlugins
 			const uint64 l_ui64CurrenTimeMs = (uint64)((m_ui64CurrentTime >> 16) / 65.5360);
 
 			if (m_bNewIteration) {
-				if (m_ui32RequestedPictureID == m_vDataset1.size()) // were all pictures used?
+				if (m_ui32RequestedPictureID == m_vImagesDataset.size()) // were all pictures used?
 				{
 					// stop experiment
 					sendStimulation(OVTK_StimulationId_ExperimentStop);
@@ -270,9 +262,9 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		OpenViBE::boolean CN400Experiment::loadDataset(std::string experimentDirectory, std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& dataset)
+		OpenViBE::boolean CN400Experiment::loadDataset(OpenViBE::CString experimentDirectory)
 		{
-			path p(experimentDirectory);
+			path p(experimentDirectory.toASCIIString());
 			directory_iterator end_itr;
 
 			for (directory_iterator itr(p); itr != end_itr; ++itr)
@@ -289,42 +281,31 @@ namespace OpenViBEPlugins
 					}
                     g_object_unref(G_OBJECT(l_pOriginalPicture));
                     l_pOriginalPicture = nullptr;
-					dataset.push_back(std::make_pair(filename, l_pScaledPicture));
+					m_vImagesDataset.push_back(std::make_pair(filename, l_pScaledPicture));
 				}
 			}
 
-			if (dataset.empty()){
+			if (m_vImagesDataset.empty()){
 				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Error, no images in directory!";
 				return false;
 			}
 
 			// Sort files according to digits in beginning of filename
-			std::sort(dataset.begin(), dataset.end(), filenamesCompare);
+			std::sort(m_vImagesDataset.begin(), m_vImagesDataset.end(), filenamesCompare);
 			return true;
 		}
 
-		void CN400Experiment::deleteDataset(std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& dataset)
+		void CN400Experiment::createMatches()
 		{
-			for (uint32 i = 0; i < dataset.size(); i++) {
-				if (dataset[i].second)
-				{
-					g_object_unref(G_OBJECT(dataset[i].second));
-					dataset[i].second = nullptr;
-				}
-			}
-		}
-
-		void CN400Experiment::createDatasetOfMatches(std::vector<OpenViBE::boolean>& datasetOfMatches, std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& imageDataset)
-		{
-			datasetOfMatches.push_back(true); // first one is cross which we dont care about
-			for (uint32 i = 1; i < imageDataset.size(); i+= 2)
+			m_vMatches.push_back(true); // first one is cross which we dont care about
+			for (uint32 i = 1; i < m_vImagesDataset.size(); i+= 2)
 			{
-				std::string filenamePicture = obtainFilename(imageDataset[i].first.toASCIIString());
-				std::string filenameWord = obtainFilename(imageDataset[i+1].first.toASCIIString());
+				std::string filenamePicture = obtainFilename(m_vImagesDataset[i].first.toASCIIString());
+				std::string filenameWord = obtainFilename(m_vImagesDataset[i+1].first.toASCIIString());
 
 				OpenViBE::boolean match = filenamePicture[0] == filenameWord[0];
-				datasetOfMatches.push_back(match); // for picture
-				datasetOfMatches.push_back(match); // for word
+				m_vMatches.push_back(match); // for picture
+				m_vMatches.push_back(match); // for word
 			}
 		}
 
@@ -341,11 +322,10 @@ namespace OpenViBEPlugins
 
 		void CN400Experiment::redraw()
 		{
-			std::vector<OpenViBE::boolean>& l_vChosenDatasetOfMatches = m_bDataset1Chosen ? m_vDatasetOfMatches1 : m_vDatasetOfMatches2;
-			uint32 l_ui32Match = 100;
-			if (m_ui32RequestedPictureID < l_vChosenDatasetOfMatches.size())
+			uint32 l_ui32Match = 0;
+			if (m_ui32RequestedPictureID < m_vImagesDataset.size())
 			{
-				l_ui32Match = l_vChosenDatasetOfMatches[m_ui32RequestedPictureID] ? 200 : 300;
+				l_ui32Match = m_vMatches[m_ui32RequestedPictureID] ? 200 : 300;
 			}
 
 			switch (m_eCurrentCue)
@@ -420,7 +400,7 @@ namespace OpenViBEPlugins
 		{
 			gint l_iImagePosX = (m_pMainWindow->allocation.width - m_ui32PictureWidth) / 2;
 			gint l_iImagePosY = (m_pMainWindow->allocation.height - m_ui32PictureHeight) / 2;
-			GdkPixbuf* image = m_bDataset1Chosen ? m_vDataset1[uint32CueID].second : m_vDataset2[uint32CueID].second;
+			GdkPixbuf* image = m_vImagesDataset[uint32CueID].second;
 			gdk_draw_pixbuf(m_pMainWindow->window, NULL, image, 0, 0, l_iImagePosX, l_iImagePosY, -1, -1, GDK_RGB_DITHER_NONE, 0, 0);
 		}
 	};

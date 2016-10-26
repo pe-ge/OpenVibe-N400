@@ -44,9 +44,9 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
 			virtual OpenViBE::boolean process(void) { return true; }
 
-			virtual OpenViBE::boolean loadDataset(std::string experimentDirectory, std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& dataset);
-			virtual void deleteDataset(std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& dataset);
-			virtual void createDatasetOfMatches(std::vector<OpenViBE::boolean>& datasetOfMatches, std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>>& imageDataset);
+			virtual OpenViBE::boolean loadDataset(OpenViBE::CString experimentDirectory);
+			virtual void createMatches();
+
 			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier);
 
 			// callback methods
@@ -80,11 +80,8 @@ namespace OpenViBEPlugins
 			OpenViBE::boolean	m_bNewIteration;
 			N400Cue				m_eCurrentCue;
 
-			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_vDataset1;
-			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_vDataset2;
-
-			std::vector<OpenViBE::boolean>	m_vDatasetOfMatches1;
-			std::vector<OpenViBE::boolean>	m_vDatasetOfMatches2;
+			std::vector<std::pair<OpenViBE::CString, ::GdkPixbuf*>> m_vImagesDataset;
+			std::vector<OpenViBE::boolean>	m_vMatches;
 
 			OpenViBE::uint64	m_ui64PreviousTime;
 			OpenViBE::uint64	m_ui64CurrentTime;
@@ -138,9 +135,11 @@ namespace OpenViBEPlugins
 				rPrototype.addSetting("First pause duration in ms", OV_TypeId_Integer, "500");
 				rPrototype.addSetting("Second pause duration in ms", OV_TypeId_Integer, "2000");
 				rPrototype.addSetting("Third pause duration in ms", OV_TypeId_Integer, "500");
-				rPrototype.addSetting("Right answer button", OV_TypeId_String, "1");
-				rPrototype.addSetting("Wrong answer button", OV_TypeId_String, "3");
+				rPrototype.addSetting("Matching button", OV_TypeId_String, "1");
+				rPrototype.addSetting("Nonmatching button", OV_TypeId_String, "3");
 				rPrototype.addSetting("Unsure button", OV_TypeId_String, "2");
+				rPrototype.addSetting("Experiment directory", OV_TypeId_String, "experiment1");
+				rPrototype.addSetting("Experiment iteration", OV_TypeId_String, "1");
 
 				rPrototype.addOutput("N400 related stimulations", OV_TypeId_Stimulations);
 				return true;
