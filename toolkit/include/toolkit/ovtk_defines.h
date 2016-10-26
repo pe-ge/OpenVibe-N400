@@ -315,8 +315,8 @@
 #define N400_ANSWER_MATCH                                    0xABCD000A
 #define N400_ANSWER_NO_MATCH                                 0xABCD000B
 #define N400_ANSWER_UNSURE                                   0xABCD000C
-#define N400_ANSWER_CORRECT                                  0xABCD000D
-#define N400_ANSWER_INCORRECT                                0xABCD000E
+#define N400_CORRECT_ANSWER                                  0xABCD000D
+#define N400_INCORRECT_ANSWER                                0xABCD000E
 
 //___________________________________________________________________//
 //                                                                   //
