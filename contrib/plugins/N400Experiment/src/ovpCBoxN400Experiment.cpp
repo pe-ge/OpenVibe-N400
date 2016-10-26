@@ -200,10 +200,12 @@ namespace OpenViBEPlugins
 			const uint64 l_ui64CurrenTimeMs = (uint64)((m_ui64CurrentTime >> 16) / 65.5360);
 
 			if (m_bNewIteration) {
+				std::cout << m_ui32RequestedPictureID << " " << m_vImagesDataset.size() << std::endl;
 				if (m_ui32RequestedPictureID == m_vImagesDataset.size()) // were all pictures used?
 				{
 					// stop experiment
 					sendStimulation(OVTK_StimulationId_ExperimentStop);
+					getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 					return true;
 				}
 				m_eCurrentCue = CROSS;
