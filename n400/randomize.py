@@ -4,7 +4,7 @@ import os
 import random
 from PIL import Image, ImageDraw, ImageFont
 
-N = 10  # number of pairs
+N = 4  # number of pairs
 dest_dir_name = 'experiment'
 W, H = (600, 600)  # dimension of word image
 font = ImageFont.truetype("verdana.ttf", 50)
@@ -78,7 +78,11 @@ def process_dataset(dataset, dest_dir):
         os.rename(old_filename, new_filename)
 
         if mismatched[m_idx]:
-            text = prepare_text(dataset[2*N + d_idx])
+            try:
+                text = prepare_text(dataset[2*N + d_idx])
+            except IndexError:
+                print('NOT ENOUGH PICTURES')
+                raise
             d_idx += 1
         else:
             text = prepare_text(old_filename)

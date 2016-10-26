@@ -1,0 +1,2 @@
+python randomize.py
+pause
