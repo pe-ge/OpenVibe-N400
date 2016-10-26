@@ -66,8 +66,7 @@ namespace OpenViBEPlugins
 			m_ui32PressedButton(0),
 			m_bRequestProcessButton(false),
 			m_bRequestBeep(false),
-			m_bExperimentStarted(false),
-			m_bDataset1Chosen(true)
+			m_bExperimentStarted(false)
 		{}
 
 		OpenViBE::boolean CN400Experiment::initialize()
@@ -97,9 +96,13 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(11, l_sExperimentIteration);
 
 			// Get experiment directory
-			l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/" + l_sExperimentDirectory + "/" + l_sExperimentIteration;
+			l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/" + l_sExperimentDirectory;
+			if (l_sExperimentDirectory.toASCIIString() == "training")
+			{
+				l_sExperimentDirectory = l_sExperimentDirectory + "/" + l_sExperimentIteration;
+			}
 
-			if (!loadDataset(l_sExperimentDirectory + "/1"))
+			if (!loadDataset(l_sExperimentDirectory))
 			{
 				return false;
 			}
