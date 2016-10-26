@@ -89,15 +89,11 @@ namespace OpenViBEPlugins
 
 			// Buttons
 			std::map<OpenViBE::CString, OpenViBE::uint32> m_mButtonCodes;
-			OpenViBE::CString	m_sRightButton;
-			OpenViBE::CString	m_sWrongButton;
+			OpenViBE::CString	m_sMatchingButton;
+			OpenViBE::CString	m_sNonmatchingButton;
 			OpenViBE::CString	m_sUnsureButton;
 
 			OpenViBE::boolean	m_bProcessingKeys;
-			OpenViBE::uint32	m_ui32PressedButton;
-			OpenViBE::boolean	m_bRequestProcessButton;
-
-			OpenViBE::boolean	m_bRequestBeep;
 
 			OpenViBE::boolean	m_bExperimentStarted;
 		};

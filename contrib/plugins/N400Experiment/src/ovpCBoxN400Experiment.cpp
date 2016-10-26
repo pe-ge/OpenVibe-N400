@@ -59,13 +59,10 @@ namespace OpenViBEPlugins
 			m_ui64PreviousTime(0),
 			m_ui64CurrentTime(0),
 			m_ui64NewIterationTime(0),
-			m_sRightButton(NULL),
-			m_sWrongButton(NULL),
+			m_sMatchingButton(NULL),
+			m_sNonmatchingButton(NULL),
 			m_sUnsureButton(NULL),
 			m_bProcessingKeys(false),
-			m_ui32PressedButton(0),
-			m_bRequestProcessButton(false),
-			m_bRequestBeep(false),
 			m_bExperimentStarted(false)
 		{}
 
@@ -85,8 +82,8 @@ namespace OpenViBEPlugins
 			m_ui64ThirdPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6);
 
 			// Button codes
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(7, m_sRightButton);
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(8, m_sWrongButton);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(7, m_sMatchingButton);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(8, m_sNonmatchingButton);
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(9, m_sUnsureButton);
 
 			// Experiment directory and iteration
@@ -200,7 +197,6 @@ namespace OpenViBEPlugins
 			const uint64 l_ui64CurrenTimeMs = (uint64)((m_ui64CurrentTime >> 16) / 65.5360);
 
 			if (m_bNewIteration) {
-				std::cout << m_ui32RequestedPictureID << " " << m_vImagesDataset.size() << std::endl;
 				if (m_ui32RequestedPictureID == m_vImagesDataset.size()) // were all pictures used?
 				{
 					// stop experiment
@@ -246,20 +242,7 @@ namespace OpenViBEPlugins
 			else if ((m_eCurrentCue == ANSWER) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64AnswerTime))
 			{
 				m_bProcessingKeys = true;
-			}
-
-			if (m_bRequestProcessButton)
-			{
-				sendStimulation(m_ui32PressedButton);
-				m_bProcessingKeys = false;
-				m_bRequestProcessButton = false;
-				m_bNewIteration = true;
-			}
-
-			if (m_bRequestBeep)
-			{
-				sendStimulation(OVTK_StimulationId_Beep);
-				m_bRequestBeep = false;
+				sendStimulation(N400_WAITING);
 			}
 
 			m_ui64PreviousTime = m_ui64CurrentTime;
@@ -330,13 +313,13 @@ namespace OpenViBEPlugins
 			uint32 l_ui32Match = 0;
 			if (m_ui32RequestedPictureID < m_vImagesDataset.size())
 			{
-				l_ui32Match = m_vMatches[m_ui32RequestedPictureID] ? 200 : 300;
+				l_ui32Match = m_vMatches[m_ui32RequestedPictureID] ? N400_PIC_MATCH - 1 : N400_PIC_MISMATCH - 1;
 			}
 
 			switch (m_eCurrentCue)
 			{
 				case CROSS:
-					sendStimulation(0);
+					sendStimulation(N400_CROSS);
 					drawPicture(0);
 					break;
 				case PICTURE1:
@@ -350,7 +333,7 @@ namespace OpenViBEPlugins
 					m_ui32RequestedPictureID++;
 					break;
 				case PAUSE1:
-					sendStimulation(1);
+					sendStimulation(N400_1ST_PAUSE);
 					gdk_window_clear(m_pMainWindow->window);
 					break;
 				case PAUSE2:
@@ -358,7 +341,7 @@ namespace OpenViBEPlugins
 					gdk_window_clear(m_pMainWindow->window);
 					break;
 				case PAUSE3:
-					sendStimulation(4);
+					sendStimulation(N400_3RD_PAUSE);
 					gdk_window_clear(m_pMainWindow->window);
 					break;
 			}
@@ -382,21 +365,33 @@ namespace OpenViBEPlugins
 
 			if (!validKey(uiKey))
 			{
-				m_bRequestBeep = true;
+				sendStimulation(OVTK_StimulationId_Beep);
 				return;
 			}
 
-			if (m_mButtonCodes[m_sRightButton] == uiKey) m_ui32PressedButton = OVTK_StimulationId_Label_0A;
-			if (m_mButtonCodes[m_sWrongButton] == uiKey) m_ui32PressedButton = OVTK_StimulationId_Label_0B;
-			if (m_mButtonCodes[m_sUnsureButton] == uiKey) m_ui32PressedButton = OVTK_StimulationId_Label_0C;
+			if (m_mButtonCodes[m_sMatchingButton] == uiKey)
+			{
+				sendStimulation(N400_ANSWER_MATCH);
+				sendStimulation(N400_CORRECT_ANSWER + !m_vMatches[m_ui32RequestedPictureID - 1]);
+			}
+			if (m_mButtonCodes[m_sNonmatchingButton] == uiKey)
+			{
+				sendStimulation(N400_ANSWER_NO_MATCH);
+				sendStimulation(N400_CORRECT_ANSWER + m_vMatches[m_ui32RequestedPictureID - 1]);
+			}
+			if (m_mButtonCodes[m_sUnsureButton] == uiKey)
+			{
+				sendStimulation(N400_ANSWER_UNSURE);
+			}
 
-			m_bRequestProcessButton = true;
+			m_bProcessingKeys = false;
+			m_bNewIteration = true;
 		}
 
 		OpenViBE::boolean CN400Experiment::validKey(guint uiKey)
 		{
-			return m_mButtonCodes[m_sRightButton] == uiKey || 
-				m_mButtonCodes[m_sWrongButton] == uiKey || 
+			return m_mButtonCodes[m_sMatchingButton] == uiKey || 
+				m_mButtonCodes[m_sNonmatchingButton] == uiKey || 
 				m_mButtonCodes[m_sUnsureButton] == uiKey;
 		}
 
