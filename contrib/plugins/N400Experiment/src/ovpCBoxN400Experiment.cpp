@@ -97,7 +97,7 @@ namespace OpenViBEPlugins
 
 			// Get experiment directory
 			l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/" + l_sExperimentDirectory;
-			if (l_sExperimentDirectory.toASCIIString() == "training")
+			if (l_sExperimentDirectory.toASCIIString() != "training")
 			{
 				l_sExperimentDirectory = l_sExperimentDirectory + "/" + l_sExperimentIteration;
 			}
