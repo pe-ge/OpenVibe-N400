@@ -32,7 +32,7 @@ def save_text(W, H, path, text):
     image = Image.new("RGBA", (W, H))
     draw = ImageDraw.Draw(image)
     w, h = font.getsize(text)
-    draw.text(((W-w)/2, (H-h)/2), text, fill="black", font=font)
+    draw.text(((W-w)/2, (H-h)/2), text.lower(), fill="black", font=font)
     image.save(path, "PNG")
 
 
@@ -47,7 +47,7 @@ def save_cross(W, H, path):
 
 def prepare_text(path):
     text = os.path.split(path)[1].split('.')[0]  # remove extension
-    return text.lower().replace('_', ' ')
+    return text.replace('_', ' ')
 
 
 def process_dataset(dataset, dest_dir):
