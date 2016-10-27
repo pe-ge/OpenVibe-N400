@@ -47,7 +47,7 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean loadDataset(OpenViBE::CString experimentDirectory);
 			virtual void createMatches();
 
-			virtual void sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier);
+			virtual void sendStimulations();
 
 			// callback methods
 			virtual void redraw(void);
@@ -96,6 +96,8 @@ namespace OpenViBEPlugins
 			OpenViBE::boolean	m_bProcessingKeys;
 
 			OpenViBE::boolean	m_bExperimentStarted;
+
+			std::vector<OpenViBE::uint64> m_vStimulationsToSend;
 		};
 
 		/**

@@ -93,12 +93,12 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(11, l_sExperimentIteration);
 
 			// Get experiment directory
-			l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/" + l_sExperimentDirectory;
-			if (l_sExperimentDirectory.toASCIIString() != "training")
+			
+			if (l_sExperimentDirectory != OpenViBE::CString("training"))
 			{
 				l_sExperimentDirectory = l_sExperimentDirectory + "/" + l_sExperimentIteration;
 			}
-
+			l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/" + l_sExperimentDirectory;
 			if (!loadDataset(l_sExperimentDirectory))
 			{
 				return false;
@@ -146,7 +146,6 @@ namespace OpenViBEPlugins
 			// output stimulation
 			m_oEncoder.initialize(*this, 0);
 			m_oEncoder.encodeHeader();
-			getBoxAlgorithmContext()->getDynamicBoxContext()->markOutputAsReadyToSend(0, 0, 0);
 
 			return true;
 		}
@@ -179,12 +178,6 @@ namespace OpenViBEPlugins
 		{
 			if (!m_bExperimentStarted) return true;
 
-			// clear previous stimulations
-			// do we need this?
-			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
-			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
-			l_pStimulationSet->clear();
-
 			// precomputing time variables
 			const uint64 l_ui64FirstPauseTime = m_ui64CrossDuration;
 			const uint64 l_ui64FirstPictureTime = l_ui64FirstPauseTime + m_ui64FirstPauseDuration;
@@ -200,8 +193,8 @@ namespace OpenViBEPlugins
 				if (m_ui32RequestedPictureID == m_vImagesDataset.size()) // were all pictures used?
 				{
 					// stop experiment
-					sendStimulation(OVTK_StimulationId_ExperimentStop);
-					getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
+					m_vStimulationsToSend.push_back(OVTK_StimulationId_ExperimentStop);
+					sendStimulations();
 					return true;
 				}
 				m_eCurrentCue = CROSS;
@@ -242,11 +235,11 @@ namespace OpenViBEPlugins
 			else if ((m_eCurrentCue == ANSWER) && (l_ui64CurrenTimeMs >= m_ui64NewIterationTime + l_ui64AnswerTime))
 			{
 				m_bProcessingKeys = true;
-				sendStimulation(N400_WAITING);
 			}
 
+			sendStimulations();
 			m_ui64PreviousTime = m_ui64CurrentTime;
-            getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
+
 			return true;
 		}
 
@@ -297,13 +290,21 @@ namespace OpenViBEPlugins
 			}
 		}
 
-		void CN400Experiment::sendStimulation(OpenViBE::uint64 ui64StimulationIdentifier)
+		void CN400Experiment::sendStimulations()
 		{
+			if (m_vStimulationsToSend.size() == 0) return;
+
 			IBoxIO * l_pBoxIO = getBoxAlgorithmContext()->getDynamicBoxContext();
 			IStimulationSet* l_pStimulationSet = m_oEncoder.getInputStimulationSet();
-			l_pStimulationSet->appendStimulation(ui64StimulationIdentifier, m_ui64CurrentTime, 0);
+			l_pStimulationSet->clear();
+			for (uint32 i = 0; i < m_vStimulationsToSend.size(); i++)
+			{
+				l_pStimulationSet->appendStimulation(m_vStimulationsToSend[i], m_ui64CurrentTime, 0);
+			}
+			m_vStimulationsToSend.clear();
 			m_oEncoder.encodeBuffer();
 			l_pBoxIO->markOutputAsReadyToSend(0, m_ui64PreviousTime, m_ui64CurrentTime);
+			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 		}
 
 		// Callbacks
@@ -319,29 +320,29 @@ namespace OpenViBEPlugins
 			switch (m_eCurrentCue)
 			{
 				case CROSS:
-					sendStimulation(N400_CROSS);
+					m_vStimulationsToSend.push_back(N400_CROSS);
 					drawPicture(0);
 					break;
 				case PICTURE1:
-					sendStimulation(l_ui32Match + 1);
+					m_vStimulationsToSend.push_back(l_ui32Match + 1);
 					drawPicture(m_ui32RequestedPictureID);
 					m_ui32RequestedPictureID++;
 					break;
 				case PICTURE2:
-					sendStimulation(l_ui32Match + 3);
+					m_vStimulationsToSend.push_back(l_ui32Match + 3);
 					drawPicture(m_ui32RequestedPictureID);
 					m_ui32RequestedPictureID++;
 					break;
 				case PAUSE1:
-					sendStimulation(N400_1ST_PAUSE);
+					m_vStimulationsToSend.push_back(N400_1ST_PAUSE);
 					gdk_window_clear(m_pMainWindow->window);
 					break;
 				case PAUSE2:
-					sendStimulation(l_ui32Match + 2);
+					m_vStimulationsToSend.push_back(l_ui32Match + 2);
 					gdk_window_clear(m_pMainWindow->window);
 					break;
 				case PAUSE3:
-					sendStimulation(N400_3RD_PAUSE);
+					m_vStimulationsToSend.push_back(N400_3RD_PAUSE);
 					gdk_window_clear(m_pMainWindow->window);
 					break;
 			}
@@ -365,23 +366,23 @@ namespace OpenViBEPlugins
 
 			if (!validKey(uiKey))
 			{
-				sendStimulation(OVTK_StimulationId_Beep);
+				m_vStimulationsToSend.push_back(OVTK_StimulationId_Beep);
 				return;
 			}
 
 			if (m_mButtonCodes[m_sMatchingButton] == uiKey)
 			{
-				sendStimulation(N400_ANSWER_MATCH);
-				sendStimulation(N400_CORRECT_ANSWER + !m_vMatches[m_ui32RequestedPictureID - 1]);
+				m_vStimulationsToSend.push_back(N400_ANSWER_MATCH);
+				m_vStimulationsToSend.push_back(N400_CORRECT_ANSWER + !m_vMatches[m_ui32RequestedPictureID - 1]);
 			}
 			if (m_mButtonCodes[m_sNonmatchingButton] == uiKey)
 			{
-				sendStimulation(N400_ANSWER_NO_MATCH);
-				sendStimulation(N400_CORRECT_ANSWER + m_vMatches[m_ui32RequestedPictureID - 1]);
+				m_vStimulationsToSend.push_back(N400_ANSWER_NO_MATCH);
+				m_vStimulationsToSend.push_back(N400_CORRECT_ANSWER + m_vMatches[m_ui32RequestedPictureID - 1]);
 			}
 			if (m_mButtonCodes[m_sUnsureButton] == uiKey)
 			{
-				sendStimulation(N400_ANSWER_UNSURE);
+				m_vStimulationsToSend.push_back(N400_ANSWER_UNSURE);
 			}
 
 			m_bProcessingKeys = false;
