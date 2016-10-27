@@ -311,7 +311,6 @@
 #define N400_PAUSE_MISMATCH                                  0xABCD0302
 #define N400_WORD_MISMATCH                                   0xABCD0303
 #define N400_3RD_PAUSE                                       0xABCD0004
-#define N400_WAITING                                         0xABCD0005
 #define N400_ANSWER_MATCH                                    0xABCD000A
 #define N400_ANSWER_NO_MATCH                                 0xABCD000B
 #define N400_ANSWER_UNSURE                                   0xABCD000C
