@@ -355,7 +355,7 @@ namespace OpenViBEPlugins
 		 * */
 		void CN400Experiment::processKey(guint uiKey)
 		{
-			if (!m_bExperimentStarted && (uiKey == 32)) // 32 = keycode of Spacebar
+			if (!m_bExperimentStarted)
 			{
 				m_bExperimentStarted = true;
 				gtk_window_set_decorated(GTK_WINDOW(m_pMainWindow), false);
