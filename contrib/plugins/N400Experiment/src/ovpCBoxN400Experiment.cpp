@@ -76,8 +76,8 @@ namespace OpenViBEPlugins
 
 			// Durations
 			m_ui64CrossDuration			= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
-			m_ui64PictureDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
-			m_ui64FirstPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
+			m_ui64FirstPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
+			m_ui64PictureDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
 			m_ui64SecondPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5);
 			m_ui64ThirdPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6);
 
@@ -355,7 +355,7 @@ namespace OpenViBEPlugins
 		 * */
 		void CN400Experiment::processKey(guint uiKey)
 		{
-			if (!m_bExperimentStarted && (uiKey == 32)) // 32 = keycode of Spacebar
+			if (!m_bExperimentStarted)
 			{
 				m_bExperimentStarted = true;
 				gtk_window_set_decorated(GTK_WINDOW(m_pMainWindow), false);
