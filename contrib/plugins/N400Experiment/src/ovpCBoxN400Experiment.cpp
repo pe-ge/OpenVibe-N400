@@ -76,8 +76,8 @@ namespace OpenViBEPlugins
 
 			// Durations
 			m_ui64CrossDuration			= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 2);
-			m_ui64PictureDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
-			m_ui64FirstPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
+			m_ui64FirstPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 3);
+			m_ui64PictureDuration		= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 4);
 			m_ui64SecondPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 5);
 			m_ui64ThirdPauseDuration	= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 6);
 
