@@ -129,7 +129,7 @@ namespace OpenViBEPlugins
 				rPrototype.addSetting("Picture height", OV_TypeId_Integer, "600");
 				rPrototype.addSetting("Cross duration in ms", OV_TypeId_Integer, "500");
 				rPrototype.addSetting("First pause duration in ms", OV_TypeId_Integer, "500");
-				rPrototype.addSetting("Picture duration in ms", OV_TypeId_Integer, "3000");
+				rPrototype.addSetting("Image/word duration in ms", OV_TypeId_Integer, "3000");
 				rPrototype.addSetting("Second pause duration in ms", OV_TypeId_Integer, "2000");
 				rPrototype.addSetting("Third pause duration in ms", OV_TypeId_Integer, "500");
 				rPrototype.addSetting("Matching button", OV_TypeId_String, "1");
