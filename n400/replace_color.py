@@ -4,7 +4,7 @@ from PIL import Image
 
 old_color = 255
 new_color = 200
-tolerance = 15
+tolerance = 50
 
 def within_tolerance(color, new_color=new_color):
     result = True
