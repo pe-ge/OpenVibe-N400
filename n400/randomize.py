@@ -31,7 +31,6 @@ def create_experiment_directories(src_dir):
 def save_text(W, H, path, text):
     image = Image.new("RGBA", (W, H))
     draw = ImageDraw.Draw(image)
-    draw.rectangle([(0,0),image.size], fill = (200,200,200))
     w, h = font.getsize(text)
     draw.text(((W-w)/2, (H-h)/2), text.lower(), fill="black", font=font)
     image.save(path, "PNG")
@@ -40,7 +39,6 @@ def save_text(W, H, path, text):
 def save_cross(W, H, path):
     image = Image.new("RGBA", (W, H))
     draw = ImageDraw.Draw(image)
-    draw.rectangle([(0,0),image.size], fill = (200,200,200))
     border = 100
     draw.line([W/2, border, W/2, H - border],  fill="black", width=10)
     draw.line([border, H/2, W - border, H/2],  fill="black", width=10)
@@ -86,9 +84,12 @@ def process_dataset(dataset, dest_dir):
                 print('NOT ENOUGH PICTURES')
                 raise
             d_idx += 1
+            print(d_idx)
         else:
             text = prepare_text(old_filename)
+        #print(old_filename, new_filename, text)
         m_idx += 1
+        
 
         new_filename = os.path.split(new_filename)[1].split('_')
         prefix = int(new_filename[0]) + 1
