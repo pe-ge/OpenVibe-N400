@@ -1,6 +1,9 @@
 #include "ovpCBoxN400Experiment.h"
 
+#include "boost/locale.hpp"
+#include "boost/filesystem/path.hpp"
 #include "boost/filesystem.hpp"
+#include <locale>
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -245,6 +248,9 @@ namespace OpenViBEPlugins
 
 		OpenViBE::boolean CN400Experiment::loadDataset(OpenViBE::CString experimentDirectory)
 		{
+            std::locale::global(boost::locale::generator().generate(""));
+			boost::filesystem::path::imbue(std::locale());
+            
 			path p(experimentDirectory.toASCIIString());
 			directory_iterator end_itr;
 
