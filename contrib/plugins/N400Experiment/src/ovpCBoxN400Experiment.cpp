@@ -90,10 +90,12 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(9, m_sUnsureButton);
 
 			// Experiment directory and iteration
+			OpenViBE::CString l_sN400dir;
 			OpenViBE::CString l_sExperimentDirectory;
 			OpenViBE::CString l_sExperimentIteration;
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(10, l_sExperimentDirectory);
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(11, l_sExperimentIteration);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(10, l_sN400dir);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(11, l_sExperimentDirectory);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(12, l_sExperimentIteration);
 
 			// Get experiment directory
 			
@@ -101,7 +103,8 @@ namespace OpenViBEPlugins
 			{
 				l_sExperimentDirectory = l_sExperimentDirectory + "/" + l_sExperimentIteration;
 			}
-			l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/" + l_sExperimentDirectory;
+			l_sExperimentDirectory = l_sN400dir + "/" + l_sExperimentDirectory;
+
 			if (!loadDataset(l_sExperimentDirectory))
 			{
 				return false;
@@ -248,9 +251,9 @@ namespace OpenViBEPlugins
 
 		OpenViBE::boolean CN400Experiment::loadDataset(OpenViBE::CString experimentDirectory)
 		{
-            std::locale::global(boost::locale::generator().generate(""));
+			std::locale::global(boost::locale::generator().generate(""));
 			boost::filesystem::path::imbue(std::locale());
-            
+
 			path p(experimentDirectory.toASCIIString());
 			directory_iterator end_itr;
 

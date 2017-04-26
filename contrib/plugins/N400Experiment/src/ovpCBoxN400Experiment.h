@@ -135,6 +135,7 @@ namespace OpenViBEPlugins
 				rPrototype.addSetting("Matching button", OV_TypeId_String, "1");
 				rPrototype.addSetting("Nonmatching button", OV_TypeId_String, "3");
 				rPrototype.addSetting("Unsure button", OV_TypeId_String, "2");
+				rPrototype.addSetting("N400 root directory", OV_TypeId_String, "C:\\Home\\bci-ras\\n400\\");
 				rPrototype.addSetting("Experiment directory", OV_TypeId_String, "experiment1");
 				rPrototype.addSetting("Experiment iteration", OV_TypeId_String, "1");
 
