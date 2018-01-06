@@ -252,6 +252,17 @@ boolean OpenViBEToolkit::initialize(const IKernelContext& rKernelContext)
     l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400_CORRECT_ANSWER", N400_CORRECT_ANSWER);
     l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400_INCORRECT_ANSWER", N400_INCORRECT_ANSWER);
 
+	// N400 Sentences
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_START_HAND_RELATED_OK", N400S_START_HAND_RELATED_OK);
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_START_HAND_RELATED_BAD", N400S_START_HAND_RELATED_BAD);
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_START_NON_ACTION_OK", N400S_START_NON_ACTION_OK);
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_START_NON_ACTION_BAD", N400S_START_NON_ACTION_BAD);
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_WORD", N400S_WORD);
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_ANSWER_REQUEST", N400S_ANSWER_REQUEST);
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_ANSWER_CORRECT", N400S_ANSWER_CORRECT);
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_ANSWER_INCORRECT", N400S_ANSWER_INCORRECT);
+	l_rTypeManager.registerEnumerationEntry(OV_TypeId_Stimulation, "N400S_ANSWER_INVALID", N400S_ANSWER_INVALID);
+
 	// Register measurement units. See ovtk_defines.h for details.
 	l_rTypeManager.registerEnumerationEntry(OV_TypeId_MeasurementUnit, "?", OVTK_UNIT_Unspecified);
 	l_rTypeManager.registerEnumerationEntry(OV_TypeId_MeasurementUnit, "-", OVTK_UNIT_Dimensionless);

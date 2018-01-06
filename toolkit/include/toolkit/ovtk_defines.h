@@ -317,6 +317,18 @@
 #define N400_CORRECT_ANSWER                                  0xABCD000D
 #define N400_INCORRECT_ANSWER                                0xABCD000E
 
+// N400 Sentences
+
+#define N400S_START_HAND_RELATED_OK	                         0xABCDE000
+#define N400S_START_HAND_RELATED_BAD                         0xABCDE001
+#define N400S_START_NON_ACTION_OK			                 0xABCDE002
+#define N400S_START_NON_ACTION_BAD	                         0xABCDE003
+#define N400S_WORD		                                     0xABCDE004
+#define N400S_ANSWER_REQUEST                                 0xABCDE005
+#define N400S_ANSWER_CORRECT	                             0xABCDE006
+#define N400S_ANSWER_INCORRECT                               0xABCDE007
+#define N400S_ANSWER_INVALID	                             0xABCDE008
+
 //___________________________________________________________________//
 //                                                                   //
 // Measurement units                                                 //
