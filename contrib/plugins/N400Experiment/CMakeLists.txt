@@ -19,6 +19,7 @@ INCLUDE("FindOpenViBEToolkit")
 INCLUDE("FindThirdPartyGTK")
 INCLUDE("FindThirdPartyBoost")
 INCLUDE("FindThirdPartyBoost_FileSystem")
+INCLUDE("FindThirdPartyBoost_Locale")
 
 # ---------------------------------
 # Target macros

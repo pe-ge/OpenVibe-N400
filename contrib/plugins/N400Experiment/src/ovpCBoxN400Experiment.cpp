@@ -1,6 +1,9 @@
 #include "ovpCBoxN400Experiment.h"
 
+#include "boost/locale.hpp"
+#include "boost/filesystem/path.hpp"
 #include "boost/filesystem.hpp"
+#include <locale>
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -87,10 +90,12 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(9, m_sUnsureButton);
 
 			// Experiment directory and iteration
+			OpenViBE::CString l_sN400dir;
 			OpenViBE::CString l_sExperimentDirectory;
 			OpenViBE::CString l_sExperimentIteration;
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(10, l_sExperimentDirectory);
-			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(11, l_sExperimentIteration);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(10, l_sN400dir);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(11, l_sExperimentDirectory);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(12, l_sExperimentIteration);
 
 			// Get experiment directory
 			
@@ -98,7 +103,8 @@ namespace OpenViBEPlugins
 			{
 				l_sExperimentDirectory = l_sExperimentDirectory + "/" + l_sExperimentIteration;
 			}
-			l_sExperimentDirectory = OpenViBE::Directories::getDataDir() + "/../../../n400/" + l_sExperimentDirectory;
+			l_sExperimentDirectory = l_sN400dir + "/" + l_sExperimentDirectory;
+
 			if (!loadDataset(l_sExperimentDirectory))
 			{
 				return false;
@@ -119,9 +125,9 @@ namespace OpenViBEPlugins
 			// set background color of main window
 			GdkColor u_oBackgroundColor;
 			u_oBackgroundColor.pixel = 0;
-			u_oBackgroundColor.red = 0xFFFF;
-			u_oBackgroundColor.green = 0xFFFF;
-			u_oBackgroundColor.blue = 0xFFFF;
+			u_oBackgroundColor.red = 0xC8C8;
+			u_oBackgroundColor.green = 0xC8C8;
+			u_oBackgroundColor.blue = 0xC8C8;
 			gtk_widget_modify_bg(m_pMainWindow, GTK_STATE_NORMAL, &u_oBackgroundColor);
 
 			gtk_widget_show(m_pMainWindow);
@@ -245,6 +251,9 @@ namespace OpenViBEPlugins
 
 		OpenViBE::boolean CN400Experiment::loadDataset(OpenViBE::CString experimentDirectory)
 		{
+			std::locale::global(boost::locale::generator().generate(""));
+			boost::filesystem::path::imbue(std::locale());
+
 			path p(experimentDirectory.toASCIIString());
 			directory_iterator end_itr;
 
@@ -271,7 +280,7 @@ namespace OpenViBEPlugins
 				return false;
 			}
 
-			// Sort files according to digits in beginning of filename
+			// Sort files numerically
 			std::sort(m_vImagesDataset.begin(), m_vImagesDataset.end(), filenamesCompare);
 			return true;
 		}
@@ -282,9 +291,11 @@ namespace OpenViBEPlugins
 			for (uint32 i = 1; i < m_vImagesDataset.size(); i+= 2)
 			{
 				std::string filenamePicture = obtainFilename(m_vImagesDataset[i].first.toASCIIString());
-				std::string filenameWord = obtainFilename(m_vImagesDataset[i+1].first.toASCIIString());
-
-				OpenViBE::boolean match = filenamePicture[0] == filenameWord[0];
+				std::string filenameWord    = obtainFilename(m_vImagesDataset[i+1].first.toASCIIString());
+                filenamePicture = filenamePicture.substr(0, filenamePicture.find(".")); // remove extension
+                filenameWord    = filenameWord.substr(0, filenameWord.find(".")); // remove extension
+                
+				OpenViBE::boolean match = filenamePicture == filenameWord;
 				m_vMatches.push_back(match); // for picture
 				m_vMatches.push_back(match); // for word
 			}
