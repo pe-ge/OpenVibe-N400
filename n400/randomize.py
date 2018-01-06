@@ -4,7 +4,7 @@ import os
 import random
 from PIL import Image, ImageDraw, ImageFont
 
-N = 4  # number of pairs
+N = 60  # number of pairs
 dest_dir_name = 'experiment'
 W, H = (600, 600)  # dimension of word image
 font = ImageFont.truetype("verdana.ttf", 50)
@@ -84,9 +84,12 @@ def process_dataset(dataset, dest_dir):
                 print('NOT ENOUGH PICTURES')
                 raise
             d_idx += 1
+            print(d_idx)
         else:
             text = prepare_text(old_filename)
+        #print(old_filename, new_filename, text)
         m_idx += 1
+        
 
         new_filename = os.path.split(new_filename)[1].split('_')
         prefix = int(new_filename[0]) + 1
