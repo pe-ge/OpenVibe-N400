@@ -197,25 +197,28 @@ namespace OpenViBEPlugins
 			if (m_eCurrentCue == INIT_CUE) {
 				showLabel(m_pStartCueLabel);
 
-				// send sentence type
-				m_vStimulationsToSend.push_back(m_vSentences[m_ui32SentenceId].second);
 				m_eCurrentCue = WORD;
 			}
 
 			// show words
 			if (m_eCurrentCue == WORD && l_ui64CurrenTimeMs >= m_ui64StartSentenceTime + m_ui64StartingCueDuration + m_ui32WordId * m_ui64WordDuration) {
-				showLabel(m_vSentences[m_ui32SentenceId].first[m_ui32WordId]);
-				m_vStimulationsToSend.push_back(N400S_WORD);
-				m_ui32WordId++;
+				
 
 				// if end of sentence
 				if (m_ui32WordId == m_vSentences[m_ui32SentenceId].first.size()) {
+					
 					// if all observed sentences were used
-					if (m_ui32SentenceId + 1 >= m_ui32TotalObservedSentences) {
+					if (m_ui32SentenceId >= m_ui32TotalObservedSentences) {
 						m_eCurrentCue = ANSWER;
 					} else {
+						m_ui32SentenceId++;
+						m_ui32WordId = 0;
 						m_bNewIteration = true;
 					}
+				} else {
+					showLabel(m_vSentences[m_ui32SentenceId].first[m_ui32WordId]);
+					m_vStimulationsToSend.push_back(N400S_WORD);
+					m_ui32WordId++;
 				}
 			}
 
@@ -423,6 +426,8 @@ namespace OpenViBEPlugins
 
 			m_bProcessingKeys = false;
 			m_bNewIteration = true;
+			m_ui32SentenceId++;
+			m_ui32WordId = 0;
 		}
 
 		OpenViBE::boolean CN400Sentences24::validKey(guint uiKey)

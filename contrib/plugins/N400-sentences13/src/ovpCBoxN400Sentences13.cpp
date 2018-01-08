@@ -1,4 +1,4 @@
-#include "ovpCBoxN400Sentences.h"
+#include "ovpCBoxN400Sentences13.h"
 
 #include "boost/locale.hpp"
 #include "boost/filesystem/path.hpp"
@@ -26,11 +26,11 @@ namespace OpenViBEPlugins
 		// Called when a key is pressed on the keyboard
 		gboolean N400Sentences_KeyPressCallback(GtkWidget *widget, GdkEventKey *thisEvent, gpointer data)
 		{
-			reinterpret_cast<CN400Sentences*>(data)->processKey(thisEvent->keyval);
+			reinterpret_cast<CN400Sentences13*>(data)->processKey(thisEvent->keyval);
 			return true;
 		}
 
-		CN400Sentences::CN400Sentences(void) :
+		CN400Sentences13::CN400Sentences13(void) :
 			m_ui64StartingCueDuration(0),
 			m_ui64WordDuration(0),
 			m_ui64AnswerTimoutDuration(0),
@@ -55,7 +55,7 @@ namespace OpenViBEPlugins
 			m_eCurrentCue(INIT_CUE)
 		{}
 
-		OpenViBE::boolean CN400Sentences::initialize()
+		OpenViBE::boolean CN400Sentences13::initialize()
 		{
 			// Experiment directory and iteration
 			OpenViBE::CString l_sN400Sdir;
@@ -143,13 +143,13 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		OpenViBE::boolean CN400Sentences::uninitialize()
+		OpenViBE::boolean CN400Sentences13::uninitialize()
 		{
 			// unref all labels
 			g_object_unref(m_pStartCueLabel);
 			g_object_unref(m_pAnswerCueLabel);
-			for (int i = 0; i < m_vSentences.size(); i++) {
-				for (int j = 0; j < m_vSentences[i].first.size(); j++) {
+			for (unsigned int i = 0; i < m_vSentences.size(); i++) {
+				for (unsigned int j = 0; j < m_vSentences[i].first.size(); j++) {
 					g_object_unref(m_vSentences[i].first[j]);
 				}
 			}
@@ -165,7 +165,7 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		OpenViBE::boolean CN400Sentences::processClock(CMessageClock& rMessageClock)
+		OpenViBE::boolean CN400Sentences13::processClock(CMessageClock& rMessageClock)
 		{
 			if (!m_bExperimentStarted) return true;
 
@@ -229,7 +229,7 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		OpenViBE::boolean CN400Sentences::prepareDataset(OpenViBE::CString datasetPath)
+		OpenViBE::boolean CN400Sentences13::prepareDataset(OpenViBE::CString datasetPath)
 		{
 			// allow UTF-8 filenames
 			std::locale::global(boost::locale::generator().generate(""));
@@ -302,7 +302,7 @@ namespace OpenViBEPlugins
 			return true;
 		}
 
-		std::vector<::GtkWidget*> CN400Sentences::createWords(std::string sentence) {
+		std::vector<::GtkWidget*> CN400Sentences13::createWords(std::string sentence) {
 			std::vector<::GtkWidget*> words;
 
 			std::string word;
@@ -314,7 +314,7 @@ namespace OpenViBEPlugins
 			return words;
 		}
 
-		::GtkWidget* CN400Sentences::createLabel(std::string text) {
+		::GtkWidget* CN400Sentences13::createLabel(std::string text) {
 			::GtkWidget* label = gtk_label_new("");
 			// ref label so its not destroyed when removed from container
 			g_object_ref(label);
@@ -326,7 +326,7 @@ namespace OpenViBEPlugins
 			return label;
 		}
 
-		void CN400Sentences::sendStimulations()
+		void CN400Sentences13::sendStimulations()
 		{
 			if (m_vStimulationsToSend.size() == 0) return;
 
@@ -343,7 +343,7 @@ namespace OpenViBEPlugins
 			getBoxAlgorithmContext()->markAlgorithmAsReadyToProcess();
 		}
 
-		void CN400Sentences::showLabel(::GtkWidget* label)
+		void CN400Sentences13::showLabel(::GtkWidget* label)
 		{
 			// remove previous label
 			if (m_pPrevLabel) gtk_container_remove(GTK_CONTAINER(m_pMainWindow), m_pPrevLabel);
@@ -355,7 +355,7 @@ namespace OpenViBEPlugins
 			// set previous label
 			m_pPrevLabel = label;
 		}
-		void CN400Sentences::processKey(guint uiKey)
+		void CN400Sentences13::processKey(guint uiKey)
 		{
 			// first key press starts experiment
 			if (!m_bExperimentStarted)
@@ -393,7 +393,7 @@ namespace OpenViBEPlugins
 			m_bNewIteration = true;
 		}
 
-		OpenViBE::boolean CN400Sentences::validKey(guint uiKey)
+		OpenViBE::boolean CN400Sentences13::validKey(guint uiKey)
 		{
 			return m_mKeyCodes[m_sKeyCorrect] == uiKey || 
 				m_mKeyCodes[m_sKeyIncorrect] == uiKey;

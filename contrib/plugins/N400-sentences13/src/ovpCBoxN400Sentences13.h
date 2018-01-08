@@ -1,5 +1,5 @@
-#ifndef __OpenViBEPlugins_BoxAlgorithm_N400Sentences_H__
-#define __OpenViBEPlugins_BoxAlgorithm_N400Sentences_H__
+#ifndef __OpenViBEPlugins_BoxAlgorithm_N400Sentences13_H__
+#define __OpenViBEPlugins_BoxAlgorithm_N400Sentences13_H__
 
 #include "ovp_defines.h"
 #include <openvibe/ov_all.h>
@@ -9,8 +9,8 @@
 #include <vector>
 #include <map>
 
-#define OVP_ClassId_BoxAlgorithm_N400Sentences OpenViBE::CIdentifier(0x18867563, 0x6BDF23E8)
-#define OVP_ClassId_BoxAlgorithm_N400SentencesDesc OpenViBE::CIdentifier(0x214410F8, 0x41F6485B)
+#define OVP_ClassId_BoxAlgorithm_N400Sentences13 OpenViBE::CIdentifier(0x18867563, 0x6BDF23E8)
+#define OVP_ClassId_BoxAlgorithm_N400Sentences13Desc OpenViBE::CIdentifier(0x214410F8, 0x41F6485B)
 
 namespace OpenViBEPlugins
 {
@@ -24,12 +24,12 @@ namespace OpenViBEPlugins
 			ANSWER
 		};
 
-		class CN400Sentences :
+		class CN400Sentences13 :
 				public OpenViBEToolkit::TBoxAlgorithm<OpenViBE::Plugins::IBoxAlgorithm>
 		{
 		public:
 
-			CN400Sentences(void);
+			CN400Sentences13(void);
 
 			virtual void release(void) { delete this; }
 
@@ -40,7 +40,7 @@ namespace OpenViBEPlugins
 			virtual OpenViBE::boolean processClock(OpenViBE::CMessageClock& rMessageClock);
 			virtual OpenViBE::boolean process(void) { return true; }
 
-			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithm, OVP_ClassId_BoxAlgorithm_N400Sentences)
+			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithm, OVP_ClassId_BoxAlgorithm_N400Sentences13)
 
 			// EXPERIMENT METHODS
 			virtual OpenViBE::boolean prepareDataset(OpenViBE::CString experimentDirectory);
@@ -57,7 +57,7 @@ namespace OpenViBEPlugins
 		protected:
 
 			// For sending stimulations
-			OpenViBEToolkit::TStimulationEncoder<CN400Sentences> m_oEncoder;
+			OpenViBEToolkit::TStimulationEncoder<CN400Sentences13> m_oEncoder;
 
 			// Box settings
 
@@ -103,21 +103,21 @@ namespace OpenViBEPlugins
 		/**
 		 * Plugin's description
 		 */
-		class CN400SentencesDesc : public OpenViBE::Plugins::IBoxAlgorithmDesc
+		class CN400Sentences13Desc : public OpenViBE::Plugins::IBoxAlgorithmDesc
 		{
 		public:
-			virtual OpenViBE::CString getName(void) const                { return OpenViBE::CString("N400 Sentences"); }
+			virtual OpenViBE::CString getName(void) const                { return OpenViBE::CString("N400 Sentences 13"); }
 			virtual OpenViBE::CString getAuthorName(void) const          { return OpenViBE::CString("Peter Gergel"); }
 			virtual OpenViBE::CString getAuthorCompanyName(void) const   { return OpenViBE::CString("FMPH UK"); }
-			virtual OpenViBE::CString getShortDescription(void) const    { return OpenViBE::CString("N400 Sentences"); }
-			virtual OpenViBE::CString getDetailedDescription(void) const { return OpenViBE::CString("N400 Sentences"); }
+			virtual OpenViBE::CString getShortDescription(void) const    { return OpenViBE::CString("N400 Sentences 13"); }
+			virtual OpenViBE::CString getDetailedDescription(void) const { return OpenViBE::CString("N400 Sentences 13"); }
 			virtual OpenViBE::CString getCategory(void) const            { return OpenViBE::CString("Visualisation/Presentation"); }
 			virtual OpenViBE::CString getVersion(void) const             { return OpenViBE::CString("1.0"); }
 			virtual void release(void)                                   { }
-			virtual OpenViBE::CIdentifier getCreatedClass(void) const    { return OVP_ClassId_BoxAlgorithm_N400Sentences; }
+			virtual OpenViBE::CIdentifier getCreatedClass(void) const    { return OVP_ClassId_BoxAlgorithm_N400Sentences13; }
 
 			virtual OpenViBE::CString getStockItemName(void) const       { return OpenViBE::CString("gtk-fullscreen"); }
-			virtual OpenViBE::Plugins::IPluginObject* create(void)       { return new OpenViBEPlugins::N400S::CN400Sentences(); }
+			virtual OpenViBE::Plugins::IPluginObject* create(void)       { return new OpenViBEPlugins::N400S::CN400Sentences13(); }
 			virtual OpenViBE::boolean hasFunctionality(OpenViBE::Kernel::EPluginFunctionality ePF) const
 			{
 				return ePF == OpenViBE::Kernel::PluginFunctionality_Visualization;
@@ -141,7 +141,7 @@ namespace OpenViBEPlugins
 				return true;
 			}
 
-			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithmDesc, OVP_ClassId_BoxAlgorithm_N400SentencesDesc)
+			_IsDerivedFromClass_Final_(OpenViBE::Plugins::IBoxAlgorithmDesc, OVP_ClassId_BoxAlgorithm_N400Sentences13Desc)
 		};
 	};
 };
