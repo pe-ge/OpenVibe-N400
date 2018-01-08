@@ -362,7 +362,7 @@ namespace OpenViBEPlugins
 			{
 				m_bExperimentStarted = true;
 				gtk_window_set_decorated(GTK_WINDOW(m_pMainWindow), false);
-				//gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
+				gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
 				return;
 			}
 
@@ -372,7 +372,6 @@ namespace OpenViBEPlugins
 				return;
 			}
 
-			//
 			if (!validKey(uiKey)) {
 				m_vStimulationsToSend.push_back(N400S_ANSWER_INVALID);
 				return;
@@ -386,11 +385,16 @@ namespace OpenViBEPlugins
 			OpenViBE::boolean sentenceOk = (sentenceType == N400S_START_HAND_RELATED_OK) || (sentenceType == N400S_START_NON_ACTION_OK);
 			OpenViBE::boolean sentenceBad = (sentenceType == N400S_START_HAND_RELATED_BAD) || (sentenceType == N400S_START_NON_ACTION_BAD);
 
-			if (pressedOk == sentenceOk) m_vStimulationsToSend.push_back(N400S_ANSWER_CORRECT);
-			if (pressedNotOk == sentenceBad) m_vStimulationsToSend.push_back(N400S_ANSWER_INCORRECT);
+			if ((pressedOk == sentenceOk) || (pressedNotOk == sentenceBad)) {
+				m_vStimulationsToSend.push_back(N400S_ANSWER_CORRECT);
+			} else {
+				m_vStimulationsToSend.push_back(N400S_ANSWER_INCORRECT);
+			}
 
 			m_bProcessingKeys = false;
 			m_bNewIteration = true;
+			m_ui32SentenceId++;
+			m_ui32WordId = 0;
 		}
 
 		OpenViBE::boolean CN400Sentences13::validKey(guint uiKey)

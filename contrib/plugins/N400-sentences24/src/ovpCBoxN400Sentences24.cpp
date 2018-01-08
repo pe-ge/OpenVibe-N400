@@ -41,6 +41,8 @@ namespace OpenViBEPlugins
 			m_sKeyIncorrect(NULL),
 			m_sStartCue(NULL),
 			m_sAnswerCue(NULL),
+			m_sAnsweringMsg(NULL),
+			m_ui64AnsweringMsgDuration(NULL),
 			m_pMainWindow(NULL),
 			m_pStartCueLabel(NULL),
 			m_pAnswerCueLabel(NULL),
@@ -75,6 +77,8 @@ namespace OpenViBEPlugins
 			m_ui32NumOldSentences			= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 9);
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(10, m_sStartCue);
 			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(11, m_sAnswerCue);
+			getBoxAlgorithmContext()->getStaticBoxContext()->getSettingValue(12, m_sAnsweringMsg);
+			m_ui64AnsweringMsgDuration			= FSettingValueAutoCast(*this->getBoxAlgorithmContext(), 13);
 
 			if (m_ui32TotalObservedSentences < m_ui32NumOldSentences) {
 				getBoxAlgorithmContext()->getPlayerContext()->getLogManager() << LogLevel_Error << "Total observed sentences must be greater than number of old sentences";
@@ -145,6 +149,7 @@ namespace OpenViBEPlugins
 
 			m_pStartCueLabel = createLabel(m_sStartCue.toASCIIString());
 			m_pAnswerCueLabel = createLabel(m_sAnswerCue.toASCIIString());
+			m_pAnsweringMsgLabel = createLabel(m_sAnsweringMsg.toASCIIString());
 
 			gtk_widget_show(m_pMainWindow);
 			return true;
@@ -155,6 +160,7 @@ namespace OpenViBEPlugins
 			// unref all labels
 			g_object_unref(m_pStartCueLabel);
 			g_object_unref(m_pAnswerCueLabel);
+			g_object_unref(m_pAnsweringMsgLabel);
 			for (unsigned int i = 0; i < m_vSentences.size(); i++) {
 				for (unsigned int j = 0; j < m_vSentences[i].first.size(); j++) {
 					g_object_unref(m_vSentences[i].first[j]);
@@ -208,7 +214,12 @@ namespace OpenViBEPlugins
 				if (m_ui32WordId == m_vSentences[m_ui32SentenceId].first.size()) {
 					
 					// if all observed sentences were used
-					if (m_ui32SentenceId >= m_ui32TotalObservedSentences) {
+					if (m_ui32SentenceId + 1 == m_ui32TotalObservedSentences) {
+						// show cue that now participant is going to answer
+						m_eCurrentCue = ANSWER_MSG;
+						showLabel(m_pAnsweringMsgLabel);
+					} else if (m_ui32SentenceId >= m_ui32TotalObservedSentences) {
+						// expect answer
 						m_eCurrentCue = ANSWER;
 					} else {
 						m_ui32SentenceId++;
@@ -220,6 +231,13 @@ namespace OpenViBEPlugins
 					m_vStimulationsToSend.push_back(N400S_WORD);
 					m_ui32WordId++;
 				}
+			}
+
+			if (m_eCurrentCue == ANSWER_MSG && l_ui64CurrenTimeMs >= m_ui64StartSentenceTime + m_ui64StartingCueDuration + m_ui32WordId * m_ui64WordDuration + m_ui64AnsweringMsgDuration) {
+				m_eCurrentCue = WORD;
+				m_ui32SentenceId++;
+				m_ui32WordId = 0;
+				m_bNewIteration = true;
 			}
 
 			// last word was shown => requesting participants answer
@@ -354,7 +372,6 @@ namespace OpenViBEPlugins
 		::GtkWidget* CN400Sentences24::createLabel(std::string text) {
 			::GtkWidget* label = gtk_label_new("");
 			// ref label so its not destroyed when removed from container
-			g_object_ref(label);
 			// copy text into char array
 			char buff[100];
 			sprintf_s(buff, sizeof(buff), "<span font_desc=\"%d\">%s</span>", m_ui32FontSize, text.c_str());
@@ -382,6 +399,7 @@ namespace OpenViBEPlugins
 
 		void CN400Sentences24::showLabel(::GtkWidget* label)
 		{
+			g_object_ref(label);
 			// remove previous label
 			if (m_pPrevLabel) gtk_container_remove(GTK_CONTAINER(m_pMainWindow), m_pPrevLabel);
 
@@ -399,7 +417,7 @@ namespace OpenViBEPlugins
 			{
 				m_bExperimentStarted = true;
 				gtk_window_set_decorated(GTK_WINDOW(m_pMainWindow), false);
-				//gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
+				gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
 				return;
 			}
 

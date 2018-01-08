@@ -21,6 +21,7 @@ namespace OpenViBEPlugins
 		{
 			INIT_CUE,
 			WORD,
+			ANSWER_MSG,
 			ANSWER
 		};
 
@@ -71,6 +72,8 @@ namespace OpenViBEPlugins
 			OpenViBE::CString				m_sKeyIncorrect;
 			OpenViBE::CString				m_sStartCue;
 			OpenViBE::CString				m_sAnswerCue;
+			OpenViBE::CString				m_sAnsweringMsg;
+			OpenViBE::uint64				m_ui64AnsweringMsgDuration;
 			
 			// Key codes
 			std::map<OpenViBE::CString, OpenViBE::uint32> m_mKeyCodes;
@@ -80,6 +83,7 @@ namespace OpenViBEPlugins
 			::GtkWidget*					m_pMainWindow;
 			::GtkWidget*					m_pStartCueLabel;
 			::GtkWidget*					m_pAnswerCueLabel;
+			::GtkWidget*					m_pAnsweringMsgLabel;
 			::GtkWidget*					m_pPrevLabel;
 
 			OpenViBE::uint32				m_ui32SentenceId;
@@ -138,6 +142,8 @@ namespace OpenViBEPlugins
 				rPrototype.addSetting("Num. old sentences", OV_TypeId_Integer, "3");
 				rPrototype.addSetting("Start of the sentence cue", OV_TypeId_String, "+");
 				rPrototype.addSetting("Answer request cue", OV_TypeId_String, "?");
+				rPrototype.addSetting("Msg for answering", OV_TypeId_String, "!!!");
+				rPrototype.addSetting("Msg time", OV_TypeId_Integer, "?");
 
 				rPrototype.addOutput("N400-sentences stimulations", OV_TypeId_Stimulations);
 				return true;
