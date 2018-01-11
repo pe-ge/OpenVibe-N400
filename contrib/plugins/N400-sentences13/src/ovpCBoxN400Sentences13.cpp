@@ -111,22 +111,6 @@ namespace OpenViBEPlugins
 			m_mKeyCodes["8"] = 65464;
 			m_mKeyCodes["9"] = 65465;
 
-			/*m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("Enter", 65293));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("+", 65451));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("-", 65453));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type(".", 46));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("00", 48));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("0", 65456));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("1", 65457));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("2", 65458));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("3", 65459));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("4", 65460));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("5", 65461));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("6", 65462));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("7", 65463));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("8", 65464));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("9", 65465));*/
-
 			// init output stimulations
 			m_oEncoder.initialize(*this, 0);
 			m_oEncoder.encodeHeader();
@@ -186,7 +170,7 @@ namespace OpenViBEPlugins
 				m_ui64StartSentenceTime = l_ui64CurrenTimeMs;
 			}
 
-			// show cross
+			// show init cue
 			if (m_eCurrentCue == INIT_CUE) {
 				showLabel(m_pStartCueLabel);
 

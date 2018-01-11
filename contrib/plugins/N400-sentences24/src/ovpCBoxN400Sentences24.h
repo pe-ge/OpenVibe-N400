@@ -90,14 +90,12 @@ namespace OpenViBEPlugins
 			OpenViBE::uint32				m_ui32WordId;
 
 			OpenViBE::boolean				m_bExperimentStarted; // subject starts experiment by pressing any key
-			OpenViBE::boolean				m_bProcessingKeys; // whether inputs should be processed at given time
 
 			// required for sending stimulations
 			OpenViBE::uint64				m_ui64PreviousTime; // absolute time
 			OpenViBE::uint64				m_ui64CurrentTime; // absolute time
 
 			OpenViBE::uint64				m_ui64StartSentenceTime; // relative time
-			OpenViBE::boolean				m_bNewIteration;
 
 			std::vector<OpenViBE::uint64>	m_vStimulationsToSend;
 

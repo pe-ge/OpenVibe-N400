@@ -50,11 +50,9 @@ namespace OpenViBEPlugins
 			m_ui32SentenceId(0),
 			m_ui32WordId(0),
 			m_bExperimentStarted(false),
-			m_bProcessingKeys(false),
 			m_ui64PreviousTime(0),
 			m_ui64CurrentTime(0),
 			m_ui64StartSentenceTime(0),
-			m_bNewIteration(true),
 			m_eCurrentCue(INIT_CUE)
 		{}
 
@@ -122,22 +120,6 @@ namespace OpenViBEPlugins
 			m_mKeyCodes["8"] = 65464;
 			m_mKeyCodes["9"] = 65465;
 
-			/*m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("Enter", 65293));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("+", 65451));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("-", 65453));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type(".", 46));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("00", 48));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("0", 65456));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("1", 65457));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("2", 65458));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("3", 65459));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("4", 65460));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("5", 65461));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("6", 65462));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("7", 65463));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("8", 65464));
-			m_mKeyCodes.insert(std::map<OpenViBE::CString, OpenViBE::uint32>::value_type("9", 65465));*/
-
 			// init output stimulations
 			m_oEncoder.initialize(*this, 0);
 			m_oEncoder.encodeHeader();
@@ -185,8 +167,8 @@ namespace OpenViBEPlugins
 			m_ui64CurrentTime = rMessageClock.getTime();
 			const uint64 l_ui64CurrenTimeMs = (uint64)((m_ui64CurrentTime >> 16) / 65.5360);
 
-			// if start of the new sentence
-			if (m_bNewIteration) {
+			// show init cue
+			if (m_eCurrentCue == INIT_CUE) {
 				// if all sentences used => stop
 				if (m_ui32SentenceId == m_vSentences.size()) {
 					m_vStimulationsToSend.push_back(OVTK_StimulationId_ExperimentStop);
@@ -194,38 +176,31 @@ namespace OpenViBEPlugins
 					return true;
 				}
 
-				m_eCurrentCue = INIT_CUE;
-				m_bNewIteration = false;
-				m_ui64StartSentenceTime = l_ui64CurrenTimeMs;
-			}
-
-			// show cross
-			if (m_eCurrentCue == INIT_CUE) {
 				showLabel(m_pStartCueLabel);
-
+				m_ui64StartSentenceTime = l_ui64CurrenTimeMs;
 				m_eCurrentCue = WORD;
 			}
 
 			// show words
 			if (m_eCurrentCue == WORD && l_ui64CurrenTimeMs >= m_ui64StartSentenceTime + m_ui64StartingCueDuration + m_ui32WordId * m_ui64WordDuration) {
-				
-
 				// if end of sentence
 				if (m_ui32WordId == m_vSentences[m_ui32SentenceId].first.size()) {
-					
-					// if all observed sentences were used
+					// if last observed sentences were used => show msg that participant will be answering
 					if (m_ui32SentenceId + 1 == m_ui32TotalObservedSentences) {
-						// show cue that now participant is going to answer
-						m_eCurrentCue = ANSWER_MSG;
 						showLabel(m_pAnsweringMsgLabel);
+						m_eCurrentCue = ANSWER_MSG;
+					// if end of asked sentence => expect answer
 					} else if (m_ui32SentenceId >= m_ui32TotalObservedSentences) {
-						// expect answer
+						showLabel(m_pAnswerCueLabel);
+						m_vStimulationsToSend.push_back(N400S_ANSWER_REQUEST);
 						m_eCurrentCue = ANSWER;
+					// otherwise move to new observed sentence
 					} else {
 						m_ui32SentenceId++;
 						m_ui32WordId = 0;
-						m_bNewIteration = true;
+						m_eCurrentCue = INIT_CUE;
 					}
+				// otherwise move to next word
 				} else {
 					showLabel(m_vSentences[m_ui32SentenceId].first[m_ui32WordId]);
 					m_vStimulationsToSend.push_back(N400S_WORD);
@@ -233,18 +208,11 @@ namespace OpenViBEPlugins
 				}
 			}
 
+			// show msg that sentences that require answer are coming
 			if (m_eCurrentCue == ANSWER_MSG && l_ui64CurrenTimeMs >= m_ui64StartSentenceTime + m_ui64StartingCueDuration + m_ui32WordId * m_ui64WordDuration + m_ui64AnsweringMsgDuration) {
-				m_eCurrentCue = WORD;
 				m_ui32SentenceId++;
 				m_ui32WordId = 0;
-				m_bNewIteration = true;
-			}
-
-			// last word was shown => requesting participants answer
-			if (m_eCurrentCue == ANSWER && !m_bProcessingKeys && l_ui64CurrenTimeMs >= m_ui64StartSentenceTime + m_ui64StartingCueDuration + m_ui32WordId * m_ui64WordDuration) {
-				showLabel(m_pAnswerCueLabel);
-				m_vStimulationsToSend.push_back(N400S_ANSWER_REQUEST);
-				m_bProcessingKeys = true;
+				m_eCurrentCue = INIT_CUE;
 			}
 
 			sendStimulations();
@@ -313,14 +281,14 @@ namespace OpenViBEPlugins
 			std::random_shuffle(non_action_bad.begin(), non_action_bad.end());
 
 			// put all sentences into one vector
-			std::vector<std::vector<::GtkWidget*>> all_sentences;
+			std::vector<std::string> all_sentences;
 			for (unsigned int i = 0; i < hand_related_ok.size(); i++) {
 				std::vector<std::string> words;
 
-				all_sentences.push_back(createWords(hand_related_ok[i]));
-				all_sentences.push_back(createWords(hand_related_bad[i]));
-				all_sentences.push_back(createWords(non_action_ok[i]));
-				all_sentences.push_back(createWords(non_action_bad[i]));
+				all_sentences.push_back(hand_related_ok[i]);
+				all_sentences.push_back(hand_related_bad[i]);
+				all_sentences.push_back(non_action_ok[i]);
+				all_sentences.push_back(non_action_bad[i]);
 			}
 
 			std::random_shuffle(all_sentences.begin(), all_sentences.end());
@@ -329,17 +297,17 @@ namespace OpenViBEPlugins
 			std::vector<std::pair<std::vector<::GtkWidget*>, OpenViBE::boolean>> l_vAskedSentences;
 			// take observed sentences
 			for (unsigned int i = 0; i < m_ui32TotalObservedSentences; i++) {
-				l_vObservedSentences.push_back(std::make_pair(all_sentences[i], false));
+				l_vObservedSentences.push_back(std::make_pair(createWords(all_sentences[i]), false));
 			}
 
 			// take old sentences
 			for (unsigned int i = 0; i < m_ui32NumOldSentences; i++) {
-				l_vAskedSentences.push_back(std::make_pair(all_sentences[i], false));
+				l_vAskedSentences.push_back(std::make_pair(createWords(all_sentences[i]), false));
 			}
 
 			// take new sentences
 			for (unsigned int i = m_ui32TotalObservedSentences; i < m_ui32TotalObservedSentences + m_ui32NumNewSentences; i++) {
-				l_vAskedSentences.push_back(std::make_pair(all_sentences[i], true));
+				l_vAskedSentences.push_back(std::make_pair(createWords(all_sentences[i]), true));
 			}
 
 			std::random_shuffle(l_vObservedSentences.begin(), l_vObservedSentences.end());
@@ -372,6 +340,7 @@ namespace OpenViBEPlugins
 		::GtkWidget* CN400Sentences24::createLabel(std::string text) {
 			::GtkWidget* label = gtk_label_new("");
 			// ref label so its not destroyed when removed from container
+			g_object_ref(label);
 			// copy text into char array
 			char buff[100];
 			sprintf_s(buff, sizeof(buff), "<span font_desc=\"%d\">%s</span>", m_ui32FontSize, text.c_str());
@@ -399,7 +368,6 @@ namespace OpenViBEPlugins
 
 		void CN400Sentences24::showLabel(::GtkWidget* label)
 		{
-			g_object_ref(label);
 			// remove previous label
 			if (m_pPrevLabel) gtk_container_remove(GTK_CONTAINER(m_pMainWindow), m_pPrevLabel);
 
@@ -417,12 +385,12 @@ namespace OpenViBEPlugins
 			{
 				m_bExperimentStarted = true;
 				gtk_window_set_decorated(GTK_WINDOW(m_pMainWindow), false);
-				gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
+				//gtk_window_maximize(GTK_WINDOW(m_pMainWindow));
 				return;
 			}
 
 			// if not processing keys, exit
-			if (!m_bProcessingKeys) {
+			if (m_eCurrentCue != ANSWER) {
 				m_vStimulationsToSend.push_back(N400S_ANSWER_INVALID);
 				return;
 			}
@@ -442,8 +410,7 @@ namespace OpenViBEPlugins
 			if (pressedOk == newSentence) m_vStimulationsToSend.push_back(N400S_ANSWER_CORRECT);
 			if (pressedNotOk == newSentence) m_vStimulationsToSend.push_back(N400S_ANSWER_INCORRECT);
 
-			m_bProcessingKeys = false;
-			m_bNewIteration = true;
+			m_eCurrentCue = INIT_CUE;
 			m_ui32SentenceId++;
 			m_ui32WordId = 0;
 		}
